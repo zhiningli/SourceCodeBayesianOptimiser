@@ -10,6 +10,9 @@ class GP(Model):
         self.y_train = None
         self.K_inv = None
     
+    def __str__(self):
+        return "This is a Gaussian Process surrogate utilising a {self.kernel}"
+
     def fit(self, X, y):
         self.X_train = np.array(X)
         self.y_train = np.array(y)
