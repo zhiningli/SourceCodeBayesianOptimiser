@@ -23,9 +23,8 @@ class TestBayesianOptimization(unittest.TestCase):
         ei_values = acquisition.compute(X_candidates, gp)
 
         next_sample = X_candidates[np.argmax(ei_values)]
-
         self.assertTrue(-2 <= next_sample <= 2, "Next sample point is out of bounds")
-        self.assertGreater(np.max(ei_values()), 0, "Expected Improvement values should be positive")
+        self.assertGreater(np.max(ei_values), 0, "Expected Improvement values should be positive")
 
 
 if __name__ == '__main__':

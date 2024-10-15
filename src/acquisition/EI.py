@@ -14,5 +14,7 @@ class EI(Acquisition):
         std = std.reshape(-1, 1)
         mean_opt = np.max(model.y_train)
         Z = (mean - mean_opt - self.xi) / (std + 1e-9)
-        ei = (mean - mean_opt - self.xi) * norm.cdf(Z) + std * norm.pdf(Z)
-        return ei.flatten
+
+        ei = (mean - mean_opt - self.xi) * norm.cdf(Z) + std * norm.pdf(Z)     
+        ei = np.array(ei).flatten()
+        return ei
