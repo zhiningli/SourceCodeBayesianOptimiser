@@ -22,6 +22,8 @@ class Kernel:
     def __call__(self, X, y):
         raise NotImplementedError("Must be implemented by subclass")
     
+    def __str__(self):
+        raise NotImplementedError("Must be implemented by subclass")    
     
 class Acquisition:
 

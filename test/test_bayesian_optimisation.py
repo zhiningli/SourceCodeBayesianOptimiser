@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.kernels.RBF import RBF
+from src.surrogate.kernels.RBF import RBF
 from src.acquisition.EI import EI
 from src.surrogate.GP import GP
 from src.optimiser.optimiser import Optimiser
@@ -8,7 +8,7 @@ from src.optimiser.optimiser import Optimiser
 def black_box_function(x):
     return np.sin(5 * x) * (1 - np.tanh(x ** 2))
 
-class TestOptimiser(unittest.TestCase):
+class TestGPOptimiser(unittest.TestCase):
     
     def test_optimisation_with_gp(self):
 
@@ -16,12 +16,12 @@ class TestOptimiser(unittest.TestCase):
         y_init = black_box_function(X_init)
 
         kernel = RBF(length_scale=0.5)
-        acquisition = EI(xi=0.01)
-        model = GP
+        model = GP(kernel=kernel)
+        acquisition = EI(xi=0.02)
 
         bounds = [(-2.0, 2.0)]
 
-        optimiser = Optimiser(kernel=kernel, acquisition=acquisition, model=model, n_iter=5)
+        optimiser = Optimiser(acquisition=acquisition, model=model, n_iter=5, objective_func=black_box_function)
 
         result = optimiser.optimise(X_init, y_init, bounds)
 

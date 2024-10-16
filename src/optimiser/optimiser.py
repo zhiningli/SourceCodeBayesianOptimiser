@@ -3,11 +3,11 @@ import numpy as np
 
 class Optimiser:
 
-    def __init__(self, kernel: Kernel, acquisition: Acquisition, model: Model, n_iter):
-        self.kernel = kernel
+    def __init__(self, acquisition: Acquisition, model: Model, n_iter, objective_func):
         self.acquisition = acquisition
-        self.model = model(kernel)
+        self.model = model
         self.n_iter = n_iter
+        self.objective_func = objective_func
 
     def optimise(self, X, y, bounds):
         """
@@ -59,5 +59,7 @@ class Optimiser:
         )
 
     def _evaluate_objective(self, X):
-        return np.sin(5 * X) * (1 - np.tanh(X ** 2))
+        
+        print("Evaluating the objective function", self.objective_func(X))
+        return self.objective_func(X)
  

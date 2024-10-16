@@ -12,3 +12,5 @@ class RBF(Kernel):
         dists = np.sum((X1[:, np.newaxis] - X2[np.newaxis, :])**2, axis = 2)
         return np.exp(-0.5 * dists / self.length_scale **2)
     
+    def __str__(self):
+        return f"RBF Kernel with length scale {self.length_scale}"
