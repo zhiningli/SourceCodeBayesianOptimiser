@@ -3,7 +3,7 @@ import numpy as np
 
 class GP(Model):
     
-    def __init__(self, kernel: Kernel, noise=1e-5):
+    def __init__(self, kernel: Kernel, noise=1e-2):
         self.kernel = kernel
         self.noise = noise
         self.X_train = None

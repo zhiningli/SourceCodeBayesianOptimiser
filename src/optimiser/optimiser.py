@@ -38,12 +38,10 @@ class Optimiser:
 
             X = np.vstack([X, next_point])
             y = np.append(y, next_value)
-
             self.model.fit(X, y)
+            print(f"Iteration {i + 1}: Best value so far is {np.min(y)}")
 
-            print(f"Iteration {i + 1}: Best value so far is {np.max(y)}")
-
-        best_idx = np.argmax(y)
+        best_idx = np.argmin(y)
         return {"best_point": X[best_idx], "best_value": y[best_idx]}
 
 
@@ -59,7 +57,5 @@ class Optimiser:
         )
 
     def _evaluate_objective(self, X):
-        
-        print("Evaluating the objective function", self.objective_func(X))
         return self.objective_func(X)
  

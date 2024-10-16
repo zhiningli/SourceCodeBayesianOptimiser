@@ -1,0 +1,80 @@
+import numpy as np
+
+class BenchmarkFunctions:
+    def __init__(self, n_dimension, search_space_range, global_minimum, global_minimumX):
+        self.n_dimension = n_dimension
+        self._search_space = search_space_range 
+        self._global_minimum = global_minimum
+        self._global_minimumX = global_minimumX
+
+    @property
+    def search_space(self):
+        """
+        Return the recommended search space for the benchmark function.
+        """
+        return [self._search_space] * self.n_dimension
+    
+    @property
+    def global_minimum(self):
+        """
+        Return the known global minimum value.
+        """
+        return self._global_minimum
+    
+    @property
+    def global_minimumX(self):
+        """
+        Return the known global minimum location.
+        """
+        return [self._global_minimumX] * self.n_dimension
+    
+
+class Rastrigin(BenchmarkFunctions):
+
+    def __init__(self, n_dimension):
+        super().__init__(n_dimension=n_dimension, 
+                         search_space_range=(-5.12, 5.12), 
+                         global_minimum=0,
+                         global_minimumX=0)
+
+    def evaluate(self, X, A=10):
+        return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
+
+
+
+class Beale(BenchmarkFunctions):
+    def __init__(self, n_dimension=2):
+        super().__init__(n_dimension=n_dimension, 
+                         search_space_range=(-4.5, 4.5), 
+                         global_minimum=0,
+                         global_minimumX=(3, 0.5))
+
+    def evaluate(self, X):
+        """
+        Evaluates the Beale function at a given point X.
+        X is expected to be a 2-dimensional point [x, y].
+        """
+        x, y = X  # Unpack the input array into x and y.
+        return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+
+
+
+class Sphere(BenchmarkFunctions):
+    def __init__(self, n_dimension):
+        super().__init__(n_dimension=n_dimension, 
+                         search_space_range=(-5.12, 5.12), 
+                         global_minimum=0,
+                         global_minimumX=0)
+
+    def evaluate(self, X):
+        X = np.array(X)
+        if X.ndim == 1:
+            # Single point evaluation
+            return np.sum(X**2)
+        elif X.ndim == 2:
+            # Multiple points or meshgrid input
+            return np.sum(X**2, axis=1)
+        elif X.ndim == 3:
+            # Meshgrid input (used for 3D plotting)
+            X, Y = X
+            return X**2 + Y**2
