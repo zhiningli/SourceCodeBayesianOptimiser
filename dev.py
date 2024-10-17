@@ -13,16 +13,19 @@ def dev_test():
     n_dimension = 2
     benchmark = Beale(n_dimension=n_dimension)
 
+    res = benchmark.evaluate([3.491966435,	-1.667119482])
+    print("Testing benchmark function: ", res)
+
     print(f"Testing {benchmark.__class__.__name__} function with {n_dimension} dimensions")
     print(f"Search space: {benchmark.search_space}")
     print(f"Known global minimum: {benchmark.global_minimum}")
     print(f"Known global minimum location: {benchmark.global_minimumX}")
 
     # Set up the optimizer components
-    kernel = RBF(length_scales=[1, 1])
-    surrogate = GP(kernel=kernel, noise=1e-2)
-    acquisition_func = PI(xi=0.04)
-    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=100, objective_func=benchmark.evaluate)
+    kernel = RBF(length_scales=[0.6, 0.6])
+    surrogate = GP(kernel=kernel, noise=1e-7)
+    acquisition_func = PI(xi=0.07)
+    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=500, objective_func=benchmark.evaluate)
 
     # Define the bounds for optimization
     bounds = benchmark.search_space
@@ -31,7 +34,7 @@ def dev_test():
     upper_bounds = np.array([b[1] for b in bounds])
 
     # Generate initial points, ensuring each dimension is sampled within its respective range
-    X_init = np.random.uniform(lower_bounds, upper_bounds, (5, benchmark.n_dimension))
+    X_init = np.random.uniform(lower_bounds, upper_bounds, (25, benchmark.n_dimension))
     y_init = np.array([benchmark.evaluate(x) for x in X_init])
 
     # Store the evaluation points for plotting
@@ -42,6 +45,7 @@ def dev_test():
 
     # Collect all evaluation points
     evaluation_points.append(optimiser.model.X_train)
+    print(evaluation_points)
 
     # Flatten the list of arrays into a single array for exporting
     all_points = np.vstack(evaluation_points)
@@ -71,11 +75,12 @@ def export_data_to_csv(points, benchmark):
     for point in points:
         x, y = point
         value = benchmark.evaluate(point)
+        print(x, y, value)
         data.append([x, y, value])
     
-    # Define the data directory relative to the src folder
-    data_dir = '../data'
-    os.makedirs(data_dir, exist_ok=True)  # Create the directory if it doesn't exist
+    # Get the absolute path of the current file's directory and construct the data folder path
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(current_dir, 'data')
     
     # Define the filename and full path
     filename = os.path.join(data_dir, 'optimization_data.csv')
@@ -87,6 +92,7 @@ def export_data_to_csv(points, benchmark):
         writer.writerows(data)
     
     print(f"Data exported to {filename}")
+
 
 if __name__ == '__main__':
     dev_test()

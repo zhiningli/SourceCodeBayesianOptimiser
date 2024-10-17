@@ -37,6 +37,11 @@ class Optimiser:
             best_candidate_idx = np.argmax(acquisition_values)
             next_point = X_candidates[best_candidate_idx]
             next_value = self._evaluate_objective(next_point)
+            # print("next_value: ", next_value)
+            # print(next_point)
+            # X, Y = next_point
+
+            # print("calculating it again: ", (1.5 - X + X * Y)**2 + (2.25 - X + X * Y**2)**2 + (2.625 - X + X * Y**3)**2)
 
             print(f"Next point selected: {next_point} with value: {next_value}")
 
@@ -51,7 +56,7 @@ class Optimiser:
         best_idx = np.argmin(y)
         return {"best_point": X[best_idx], "best_value": y[best_idx]}
 
-    def _generate_candidates(self, X, y, bounds, n_total=1000):
+    def _generate_candidates(self, X, y, bounds, n_total=600):
         """
         Generates candidate points with a mix of uniform sampling across the space
         and sampling concentrated around the current best point, ensuring all points
@@ -66,7 +71,7 @@ class Optimiser:
         Returns:
         np.ndarray: An array of candidate points.
         """
-        n_uniform = n_total // 4  # Number of uniformly sampled points
+        n_uniform = n_total // 3  # Number of uniformly sampled points
         n_near_best = n_total - n_uniform  # Number of points near the best candidate
 
         lower_bounds = np.array([b[0] for b in bounds])

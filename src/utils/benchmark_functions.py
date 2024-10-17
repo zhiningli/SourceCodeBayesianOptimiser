@@ -37,7 +37,7 @@ class Rastrigin(BenchmarkFunctions):
                          global_minimum=0,
                          global_minimumX=[0] * n_dimension)  # Global minimum is a vector of zeros
 
-    def evaluate(self, X, A=10):
+    def evaluate(self, X, A=3):
         X = np.array(X)
         if X.ndim == 1:
             # Single point evaluation
