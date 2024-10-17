@@ -61,10 +61,23 @@ class Beale(BenchmarkFunctions):
     def evaluate(self, X):
         """
         Evaluates the Beale function at a given point X.
-        X is expected to be a 2-dimensional point [x, y].
+        Supports single point evaluation, 2D array of points, or meshgrid input.
         """
-        x, y = X  # Unpack the input array into x and y.
-        return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+        print(X)
+        X = np.array(X)
+        
+        if X.ndim == 1:  # Single point evaluation
+            x, y = X  # Unpack x and y
+            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+        
+        elif X.ndim == 2:  # Multiple points evaluation (X is a 2D array with shape (n_points, 2))
+            x, y = X[:, 0], X[:, 1]
+            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+        
+        elif X.ndim == 3:  # Meshgrid input for plotting (X is a meshgrid tuple like (X_mesh, Y_mesh))
+            X, Y = X
+            return (1.5 - X + X * Y)**2 + (2.25 - X + X * Y**2)**2 + (2.625 - X + X * Y**3)**2
+
 
 
 

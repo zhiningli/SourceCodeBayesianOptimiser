@@ -25,7 +25,7 @@ class Optimiser:
 
         for i in range(self.n_iter):
             # Generate candidate points using the custom strategy
-            X_candidates = self._generate_candidates(X, y, bounds, n_total=200)
+            X_candidates = self._generate_candidates(X, y, bounds)
 
             # Compute the acquisition value using the acquisition function provided.
             acquisition_values = self.acquisition.compute(X_candidates, self.model)
@@ -51,10 +51,11 @@ class Optimiser:
         best_idx = np.argmin(y)
         return {"best_point": X[best_idx], "best_value": y[best_idx]}
 
-    def _generate_candidates(self, X, y, bounds, n_total=400):
+    def _generate_candidates(self, X, y, bounds, n_total=1000):
         """
         Generates candidate points with a mix of uniform sampling across the space
-        and sampling concentrated around the current best point.
+        and sampling concentrated around the current best point, ensuring all points
+        fall within the specified bounds.
 
         Parameters:
         X (np.ndarray): Training data points.
@@ -65,19 +66,30 @@ class Optimiser:
         Returns:
         np.ndarray: An array of candidate points.
         """
-        n_uniform = n_total // 2  # Number of uniformly sampled points
+        n_uniform = n_total // 4  # Number of uniformly sampled points
         n_near_best = n_total - n_uniform  # Number of points near the best candidate
 
-        uniform_samples = np.array([np.random.uniform(b[0], b[1], n_uniform) for b in bounds]).T
+        lower_bounds = np.array([b[0] for b in bounds])
+        upper_bounds = np.array([b[1] for b in bounds])
+        uniform_samples = np.random.uniform(lower_bounds, upper_bounds, (n_uniform, len(bounds)))
+        # Generate uniform random samples within the bounds
 
+        # Identify the best point from the training data
         best_idx = np.argmin(y)
         best_point = X[best_idx]
 
-        noise_scale = 0.04 * np.abs(np.array([b[1] - b[0] for b in bounds]))
+        # Generate near-best samples by adding Gaussian noise around the best point
+        noise_scale = 0.05 * np.abs(np.array([b[1] - b[0] for b in bounds]))
         near_best_samples = np.array([np.random.normal(best_point[i], noise_scale[i], n_near_best) for i in range(len(bounds))]).T
-
+        print("Best point is: ", best_point)
+        # Combine the uniform and near-best samples
         candidates = np.vstack([uniform_samples, near_best_samples])
+
+        # Ensure that all generated candidate points fall within the bounds
+        candidates = np.clip(candidates, lower_bounds, upper_bounds)
+
         return candidates
+
 
     def _evaluate_objective(self, X):
         """

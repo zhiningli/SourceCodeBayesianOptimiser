@@ -4,14 +4,14 @@ from src.surrogate.kernels.RBF import RBF
 from src.acquisition.PI import PI
 from src.surrogate.GP import GP
 from src.optimiser.optimiser import Optimiser
-from src.utils.benchmark_functions import Sphere, Rastrigin
+from src.utils.benchmark_functions import Sphere, Rastrigin, Beale
 import csv
 import os
 
 def dev_test():
     # Define the benchmark function to use for testing
     n_dimension = 2
-    benchmark = Rastrigin(n_dimension=n_dimension)
+    benchmark = Beale(n_dimension=n_dimension)
 
     print(f"Testing {benchmark.__class__.__name__} function with {n_dimension} dimensions")
     print(f"Search space: {benchmark.search_space}")
@@ -19,10 +19,10 @@ def dev_test():
     print(f"Known global minimum location: {benchmark.global_minimumX}")
 
     # Set up the optimizer components
-    kernel = RBF(length_scales=[0.1, 0.1])
+    kernel = RBF(length_scales=[1, 1])
     surrogate = GP(kernel=kernel, noise=1e-2)
-    acquisition_func = PI(xi=0.1)
-    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=300, objective_func=benchmark.evaluate)
+    acquisition_func = PI(xi=0.04)
+    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=100, objective_func=benchmark.evaluate)
 
     # Define the bounds for optimization
     bounds = benchmark.search_space
