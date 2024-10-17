@@ -6,17 +6,6 @@ from src.surrogate.GP import GP
 from src.optimiser.optimiser import Optimiser
 from src.utils.benchmark_functions import Sphere, Rastrigin
 
-def black_box_function(x):
-    return np.sin(5 * x) * (1 - np.tanh(x ** 2))
-
-import unittest
-import numpy as np
-from src.surrogate.kernels.RBF import RBF
-from src.acquisition.PI import PI
-from src.surrogate.GP import GP
-from src.optimiser.optimiser import Optimiser
-from src.utils.benchmark_functions import Sphere, Rastrigin
-
 class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 
     def test_PI_GP_RBF_on_Sphere(self):
@@ -30,7 +19,6 @@ class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 
         bounds = benchmark.search_space
         np.random.seed(42)
-        # Generate initial points within the search space
         lower_bounds = np.array([b[0] for b in bounds])
         upper_bounds = np.array([b[1] for b in bounds])
         X_init = np.random.uniform(lower_bounds, upper_bounds, (15, benchmark.n_dimension))
@@ -38,7 +26,6 @@ class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 
         result = optimiser.optimise(X_init, y_init, bounds)
 
-        # Calculate the Euclidean distance between the found point and the known global minimum point
         distance_to_global_minimum = np.linalg.norm(result['best_point'] - benchmark.global_minimumX)
         print(f"Distance to global minimum: {distance_to_global_minimum}")
 
@@ -56,17 +43,14 @@ class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 
         bounds = benchmark.search_space
         np.random.seed(42)   
-        # Extract lower and upper bounds for each dimension
         lower_bounds = np.array([b[0] for b in bounds])
         upper_bounds = np.array([b[1] for b in bounds])
 
-        # Generate initial points, ensuring each dimension is sampled within its respective range
         X_init = np.random.uniform(lower_bounds, upper_bounds, (5, benchmark.n_dimension))
         y_init = np.array([benchmark.evaluate(x) for x in X_init])
 
         result = optimiser.optimise(X_init, y_init, bounds)
 
-        # Calculate the Euclidean distance between the found point and the known global minimum point
         distance_to_global_minimum = np.linalg.norm(result['best_point'] - benchmark.global_minimumX)
         print(f"Distance to global minimum: {distance_to_global_minimum}")
 
@@ -76,6 +60,3 @@ class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-
-if __name__ == '__main__':
-    unittest.main()
