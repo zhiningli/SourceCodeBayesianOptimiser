@@ -4,11 +4,14 @@ import math
 class Norm:
     def pdf(self, x):
         """Probability density function of a standard normal distribution."""
+        # Cap x to prevent underflow/overflow in exponential calculation
+        x = np.clip(x, -10, 10)
         return (1.0 / math.sqrt(2 * math.pi)) * np.exp(-0.5 * x**2)
 
     def cdf(self, x):
         """Cumulative distribution function of a standard normal distribution."""
-        # Use the error function (erf) to calculate the CDF
+        # Cap x to avoid numerical issues with extremely large/small values
+        x = np.clip(x, -10, 10)
         return 0.5 * (1 + self.erf(x / math.sqrt(2)))
 
     def erf(self, x):
