@@ -35,11 +35,20 @@ class Rastrigin(BenchmarkFunctions):
         super().__init__(n_dimension=n_dimension, 
                          search_space_range=(-5.12, 5.12), 
                          global_minimum=0,
-                         global_minimumX=0)
+                         global_minimumX=[0] * n_dimension)  # Global minimum is a vector of zeros
 
     def evaluate(self, X, A=10):
-        return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
-
+        X = np.array(X)
+        if X.ndim == 1:
+            # Single point evaluation
+            return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
+        elif X.ndim == 2:
+            # Multiple points or meshgrid input
+            return A * X.shape[1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=1)
+        elif X.ndim == 3:
+            # Meshgrid input (used for 3D plotting)
+            X, Y = X
+            return A * 2 + (X**2 - A * np.cos(2 * np.pi * X)) + (Y**2 - A * np.cos(2 * np.pi * Y))
 
 
 class Beale(BenchmarkFunctions):
@@ -69,12 +78,9 @@ class Sphere(BenchmarkFunctions):
     def evaluate(self, X):
         X = np.array(X)
         if X.ndim == 1:
-            # Single point evaluation
             return np.sum(X**2)
         elif X.ndim == 2:
-            # Multiple points or meshgrid input
             return np.sum(X**2, axis=1)
         elif X.ndim == 3:
-            # Meshgrid input (used for 3D plotting)
             X, Y = X
             return X**2 + Y**2

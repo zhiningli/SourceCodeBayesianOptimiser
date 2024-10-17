@@ -23,6 +23,4 @@ class PI(Acquisition):
         
         # Avoid negative PI values due to numerical errors
         pi = np.maximum(pi, 0)
-        
-        print(f"Mean: {mean[:5]}, mean_opt: {mean_opt}, xi: {self.xi}, Std Dev: {std[:5]}, Z: {Z[:5]}, PI: {pi[:5]}")
         return pi
