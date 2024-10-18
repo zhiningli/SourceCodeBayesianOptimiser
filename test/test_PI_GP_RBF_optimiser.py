@@ -13,7 +13,7 @@ class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
         benchmark = Sphere(n_dimension=n_dimension)
 
         kernel = RBF(length_scales=[1, 1])
-        surrogate = GP(kernel=kernel, noise=1e-2)
+        surrogate = GP(kernel=kernel, noise=1e-7)
         acquisition_func = PI(xi=0.1)
         optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=50, objective_func=benchmark.evaluate)
 

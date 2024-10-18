@@ -11,7 +11,7 @@ import os
 def dev_test():
     # Define the benchmark function to use for testing
     n_dimension = 2
-    benchmark = Beale(n_dimension=n_dimension)
+    benchmark = Rastrigin(n_dimension=n_dimension)
 
     res = benchmark.evaluate([3.491966435,	-1.667119482])
     print("Testing benchmark function: ", res)
@@ -22,10 +22,10 @@ def dev_test():
     print(f"Known global minimum location: {benchmark.global_minimumX}")
 
     # Set up the optimizer components
-    kernel = RBF(length_scales=[0.6, 0.6])
+    kernel = RBF(length_scales=[0.25, 0.25])
     surrogate = GP(kernel=kernel, noise=1e-7)
-    acquisition_func = PI(xi=0.07)
-    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=300, objective_func=benchmark.evaluate)
+    acquisition_func = PI(xi=0.1)
+    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=200, objective_func=benchmark.evaluate)
 
     # Define the bounds for optimization
     bounds = benchmark.search_space
