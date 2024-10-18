@@ -25,7 +25,7 @@ def dev_test():
     kernel = RBF(length_scales=[0.6, 0.6])
     surrogate = GP(kernel=kernel, noise=1e-7)
     acquisition_func = PI(xi=0.07)
-    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=500, objective_func=benchmark.evaluate)
+    optimiser = Optimiser(acquisition=acquisition_func, model=surrogate, n_iter=300, objective_func=benchmark.evaluate)
 
     # Define the bounds for optimization
     bounds = benchmark.search_space
