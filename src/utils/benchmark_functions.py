@@ -124,9 +124,6 @@ It has a global minimum at x=0, where the function value is zero. The typical se
             return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
 
 
-
-import numpy as np
-
 class Beale(BenchmarkFunctions):
     def __init__(self, n_dimension=2, noises=0.0, irrelevant_dims=0):
         # Beale function operates in a 2D space, so n_dimension is set to 2 by default
@@ -174,21 +171,50 @@ It is used to test optimization algorithms in 2D space. The typical search range
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
 
-
-
 class Sphere(BenchmarkFunctions):
-    def __init__(self, n_dimension):
+    def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
+        """
+        Initializes the Sphere function benchmark.
+        The Sphere function is typically used as a basic benchmark function for optimization.
+        It has a global minimum at 0, where f(0) = 0, and is defined for a search space range [-5.12, 5.12].
+        """
         super().__init__(n_dimension=n_dimension, 
-                         search_space_range=(-5.12, 5.12), 
+                         search_space_ranges=[(-5.12, 5.12)] * n_dimension, 
                          global_minimum=0,
-                         global_minimumX=0)
-
+                         global_minimumX=[0] * n_dimension,
+                         noises=noises,
+                         irrelevant_dims=irrelevant_dims,
+                         description="""The Sphere function is a simple benchmark function for optimization. 
+The global minimum is at (0, 0, ..., 0), where f(0) = 0. The typical search space for each dimension 
+is [-5.12, 5.12], and the function is convex and unimodal.""")
+    
     def evaluate(self, X):
+        """
+        Evaluates the Sphere function at a given point X.
+        Supports single point evaluation (1D), multiple points (2D), and meshgrid input (3D).
+        Handles higher-dimensional arrays (ndim > 3) as well.
+        """
         X = np.array(X)
+        
+        # Error handling for dimension mismatch
+        total_dims = self.n_dimension + self.irrelevant_dims
+        if X.shape[-1] != total_dims:
+            raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
+
+        # Handling 1D input (single point evaluation)
         if X.ndim == 1:
             return np.sum(X**2)
+        
+        # Handling 2D input (multiple points)
         elif X.ndim == 2:
             return np.sum(X**2, axis=1)
+        
+        # Handling 3D input (meshgrid for plotting)
         elif X.ndim == 3:
-            X, Y = X
+            X, Y = X  # Unpack meshgrid tuple
             return X**2 + Y**2
+        
+        # Handling ND input (N > 3)
+        else:
+            # General case for higher-dimensional inputs (X.ndim > 3)
+            return np.sum(X**2, axis=-1)
