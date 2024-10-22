@@ -105,7 +105,7 @@ class Rastrigin(BenchmarkFunctions):
                          description="""The Rastrigin function is a multi-modal, highly non-convex benchmark function used to test optimization algorithms. 
 It has a global minimum at x=0, where the function value is zero. The typical search range for each dimension is between -5.12 and 5.12.""") 
     
-    def evaluate(self, X, A=10):
+    def evaluate(self, X, A=3):
         """
         Evaluates the Rastrigin function for a given input X.
 
