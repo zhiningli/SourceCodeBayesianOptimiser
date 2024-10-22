@@ -99,6 +99,10 @@ class BenchmarkFunctions:
         return inspect.getsource(self._source_code)
 
 
+
+
+
+
 class Rastrigin(BenchmarkFunctions):
 
     def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
@@ -142,6 +146,10 @@ It has a global minimum at x=0, where the function value is zero. The typical se
         
 
 
+
+
+
+
 class Beale(BenchmarkFunctions):
     def __init__(self, n_dimension=2, noises=0.0, irrelevant_dims=0):
         super().__init__(n_dimension=n_dimension, 
@@ -163,6 +171,8 @@ It is used to test optimization algorithms in 2D space. The typical search range
 
         X: Can be a single point (1D array), multiple points (2D array), or a meshgrid input (3D for plotting).
         """
+        if not isinstance(X, np.ndarray):
+            raise TypeError("Input X must be a numpy array")
         total_dims = self.n_dimension + self.irrelevant_dims
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
@@ -172,7 +182,9 @@ It is used to test optimization algorithms in 2D space. The typical search range
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
         elif X.ndim == 2:
+            x, y = X[:, 0], X[:, 1]  # Unpack x and y from 2D array
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+
         
         elif X.ndim == 3:
             X_mesh, Y_mesh = X
@@ -181,6 +193,8 @@ It is used to test optimization algorithms in 2D space. The typical search range
         else:
             x, y = X[..., 0], X[..., 1] 
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+
+
 
 
 class Sphere(BenchmarkFunctions):
@@ -209,7 +223,10 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
         Supports single point evaluation (1D), multiple points (2D), and meshgrid input (3D).
         Handles higher-dimensional arrays (ndim > 3) as well.
         """
-        
+
+        if not isinstance(X, np.ndarray):
+            raise TypeError("Input X must be a numpy array")
+
         total_dims = self.n_dimension + self.irrelevant_dims
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
@@ -221,11 +238,12 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
             return np.sum(X**2, axis=1)
         
         elif X.ndim == 3:
-            X, Y = X  # Unpack meshgrid tuple
+            X, Y = X  
             return X**2 + Y**2
         
         else:
             return np.sum(X**2, axis=-1)
+
 
 
 
