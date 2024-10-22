@@ -19,6 +19,9 @@ class BenchmarkFunctions:
         self.irrelevant_dims = irrelevant_dims
         self.irrelevant_search_spaces = [] 
 
+        self._search_space_ranges = np.array(self._search_space_ranges)
+        self._global_minimumX = np.array(self._global_minimumX)
+
     @property
     def search_space(self):
         """
@@ -141,7 +144,6 @@ It has a global minimum at x=0, where the function value is zero. The typical se
 
 class Beale(BenchmarkFunctions):
     def __init__(self, n_dimension=2, noises=0.0, irrelevant_dims=0):
-        # Beale function operates in a 2D space, so n_dimension is set to 2 by default
         super().__init__(n_dimension=n_dimension, 
                          search_space_ranges=[(-4.5, 4.5)] * n_dimension, 
                          global_minimum=0,
@@ -177,7 +179,7 @@ It is used to test optimization algorithms in 2D space. The typical search range
             return (1.5 - X_mesh + X_mesh * Y_mesh)**2 + (2.25 - X_mesh + X_mesh * Y_mesh**2)**2 + (2.625 - X_mesh + X_mesh * Y_mesh**3)**2
         
         else:
-            x, y = X[..., 0], X[..., 1]  # Unpack the first two dimensions
+            x, y = X[..., 0], X[..., 1] 
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
 
