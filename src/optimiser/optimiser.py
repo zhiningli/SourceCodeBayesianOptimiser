@@ -36,6 +36,7 @@ class Optimiser:
             # Select the candidate with the highest acquisition value
             best_candidate_idx = np.argmax(acquisition_values)
             next_point = X_candidates[best_candidate_idx]
+            print(type(next_point))
             next_value = self._evaluate_objective(next_point)
             # print("next_value: ", next_value)
             # print(next_point)
