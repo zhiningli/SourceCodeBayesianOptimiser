@@ -52,7 +52,6 @@ class BenchmarkFunctions:
         """
         return self.description
     
-    @property
     def _source_code(self):
         """The actual source code that should be read by our source code reader"""
         pass
@@ -109,8 +108,7 @@ class Rastrigin(BenchmarkFunctions):
                          description="""The Rastrigin function is a multi-modal, highly non-convex benchmark function used to test optimization algorithms. 
 It has a global minimum at x=0, where the function value is zero. The typical search range for each dimension is between -5.12 and 5.12.""") 
     
-    @property
-    def _get_source_code(self, X):
+    def _source_code(self, X):
         A = 3
         return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
 
@@ -121,8 +119,8 @@ It has a global minimum at x=0, where the function value is zero. The typical se
         X: Input can be a 1D, 2D, 3D or higher-dimensional input for the Rastrigin function.
         A: The scale factor (typically set to 10).
         """
-        if (type(X) != np.array):
-            raise TypeError(f"input X must be a numpy array")
+        if not isinstance(X, np.ndarray):
+            raise TypeError(f"Input X must be a numpy array")
 
 
         total_dims = self.n_dimension + self.irrelevant_dims
@@ -153,8 +151,7 @@ class Beale(BenchmarkFunctions):
                          description="""The Beale function is a benchmark function with many local minima near the global minimum at (3, 0.5). 
 It is used to test optimization algorithms in 2D space. The typical search range is between -4.5 and 4.5 for both x and y.""")
 
-    @property
-    def _get_source_code(self, X):
+    def _source_code(self, X):
         x, y = X[..., 0], X[..., 1]
         return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
@@ -201,8 +198,7 @@ class Sphere(BenchmarkFunctions):
 The global minimum is at (0, 0, ..., 0), where f(0) = 0. The typical search space for each dimension 
 is [-5.12, 5.12], and the function is convex and unimodal.""")
         
-    @property
-    def _get_source_code(self, X):
+    def _source_code(self, X):
         return np.sum(X**2, axis=-1)
     
     def evaluate(self, X):
