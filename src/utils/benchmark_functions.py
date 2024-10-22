@@ -78,59 +78,100 @@ class BenchmarkFunctions:
     def evaluate(self, X):
         pass
 
-    
 
 class Rastrigin(BenchmarkFunctions):
 
-    def __init__(self, n_dimension, noises=0.0, irrelevant_dims = 0):
+    def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
         super().__init__(n_dimension=n_dimension, 
-                         search_space_range=(-5.12, 5.12), 
+                         search_space_ranges=[(-5.12, 5.12)] * n_dimension, 
                          global_minimum=0,
                          global_minimumX=[0] * n_dimension,
-                         noises = noises, 
-                         irrelevant_dims = irrelevant_dims,
-                         description="") 
+                         noises=noises, 
+                         irrelevant_dims=irrelevant_dims,
+                         description="""The Rastrigin function is a multi-modal, highly non-convex benchmark function used to test optimization algorithms. 
+It has a global minimum at x=0, where the function value is zero. The typical search range for each dimension is between -5.12 and 5.12.""") 
+    
+    def evaluate(self, X, A=10):
+        """
+        Evaluates the Rastrigin function for a given input X.
 
-    def evaluate(self, X, A=3):
+        X: Input can be a 1D, 2D, 3D or higher-dimensional input for the Rastrigin function.
+        A: The scale factor (typically set to 10).
+        """
         X = np.array(X)
+        total_dims = self.n_dimension + self.irrelevant_dims
+
+        # Error handling: Check if input dimensions match expected total dimensions
+        if X.shape[-1] != total_dims:
+            raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
+        
+        # Handling 1D input (single point evaluation)
         if X.ndim == 1:
-            # Single point evaluation
             return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
+        
+        # Handling 2D input (multiple points)
         elif X.ndim == 2:
-            # Multiple points or meshgrid input
             return A * X.shape[1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=1)
+        
+        # Handling 3D input (used for plotting purposes, e.g., meshgrid for surface plots)
         elif X.ndim == 3:
-            # Meshgrid input (used for 3D plotting)
             X, Y = X
             return A * 2 + (X**2 - A * np.cos(2 * np.pi * X)) + (Y**2 - A * np.cos(2 * np.pi * Y))
+        
+        # Handling ND input (N > 3)
+        else:
+            # This will handle higher-dimensional arrays (X.ndim > 3)
+            return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
 
+
+
+import numpy as np
 
 class Beale(BenchmarkFunctions):
-    def __init__(self, n_dimension=2):
+    def __init__(self, n_dimension=2, noises=0.0, irrelevant_dims=0):
+        # Beale function operates in a 2D space, so n_dimension is set to 2 by default
         super().__init__(n_dimension=n_dimension, 
-                         search_space_range=(-4.5, 4.5), 
+                         search_space_ranges=[(-4.5, 4.5)] * n_dimension, 
                          global_minimum=0,
-                         global_minimumX=(3, 0.5))
+                         global_minimumX=[3, 0.5],  # Global minimum at (3, 0.5)
+                         noises=noises, 
+                         irrelevant_dims=irrelevant_dims,
+                         description="""The Beale function is a benchmark function with many local minima near the global minimum at (3, 0.5). 
+It is used to test optimization algorithms in 2D space. The typical search range is between -4.5 and 4.5 for both x and y.""")
 
     def evaluate(self, X):
         """
-        Evaluates the Beale function at a given point X.
-        Supports single point evaluation, 2D array of points, or meshgrid input.
+        Evaluates the Beale function at a given input X.
+
+        X: Can be a single point (1D array), multiple points (2D array), or a meshgrid input (3D for plotting).
         """
-        print(X)
         X = np.array(X)
+        total_dims = self.n_dimension + self.irrelevant_dims
+
+        # Error handling: Check if input dimensions match expected total dimensions
+        if X.shape[-1] != total_dims:
+            raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
         
-        if X.ndim == 1:  # Single point evaluation
+        # Single point evaluation (1D)
+        if X.ndim == 1:
             x, y = X  # Unpack x and y
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
         
-        elif X.ndim == 2:  # Multiple points evaluation (X is a 2D array with shape (n_points, 2))
-            x, y = X[:, 0], X[:, 1]
+        # Multiple points evaluation (2D)
+        elif X.ndim == 2:
+            x, y = X[:, 0], X[:, 1]  # Unpack x and y for all points
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
         
-        elif X.ndim == 3:  # Meshgrid input for plotting (X is a meshgrid tuple like (X_mesh, Y_mesh))
-            X, Y = X
-            return (1.5 - X + X * Y)**2 + (2.25 - X + X * Y**2)**2 + (2.625 - X + X * Y**3)**2
+        # Meshgrid input for plotting (3D)
+        elif X.ndim == 3:
+            X_mesh, Y_mesh = X
+            return (1.5 - X_mesh + X_mesh * Y_mesh)**2 + (2.25 - X_mesh + X_mesh * Y_mesh**2)**2 + (2.625 - X_mesh + X_mesh * Y_mesh**3)**2
+        
+        # Handling ND input (N > 3)
+        else:
+            # Unpack the first two dimensions (x and y) and ignore irrelevant dimensions
+            x, y = X[..., 0], X[..., 1]  # Unpack the first two dimensions
+            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
 
 
