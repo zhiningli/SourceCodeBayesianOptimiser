@@ -1,4 +1,5 @@
 import numpy as np
+import inspect
 
 class BenchmarkFunctions:
     def __init__(self, n_dimension, search_space_ranges, global_minimum, global_minimumX, noises = 0.0, irrelevant_dims = 0,description=""):
@@ -76,7 +77,20 @@ class BenchmarkFunctions:
         print(f"The search space has {self.n_dimension} relevant dimensions and {self.irrelevant_dims} irrelevant dimensions, totaling {total_dims} dimensions.")
     
     def evaluate(self, X):
-        pass
+        """
+        To be inherited by benchmark functions, this is the source code that is going to be passed to the optimser as priors
+        """
+
+
+    def evalute_with_noise(self, X):
+        return self.evaluate(X) + np.random.normal(0, self.noise_std)
+    
+
+    def get_objective_function_as_string(self):
+        """
+        Returns the source code of the evaluate function as a string.
+        """
+        return inspect.getsource(self.evaluate)
 
 
 class Rastrigin(BenchmarkFunctions):
@@ -100,28 +114,19 @@ It has a global minimum at x=0, where the function value is zero. The typical se
         """
         X = np.array(X)
         total_dims = self.n_dimension + self.irrelevant_dims
-
-        # Error handling: Check if input dimensions match expected total dimensions
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
-        
-        # Handling 1D input (single point evaluation)
+    
         if X.ndim == 1:
             return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
-        
-        # Handling 2D input (multiple points)
         elif X.ndim == 2:
             return A * X.shape[1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=1)
-        
-        # Handling 3D input (used for plotting purposes, e.g., meshgrid for surface plots)
         elif X.ndim == 3:
             X, Y = X
             return A * 2 + (X**2 - A * np.cos(2 * np.pi * X)) + (Y**2 - A * np.cos(2 * np.pi * Y))
-        
-        # Handling ND input (N > 3)
         else:
-            # This will handle higher-dimensional arrays (X.ndim > 3)
             return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
+        
 
 
 class Beale(BenchmarkFunctions):
@@ -144,29 +149,21 @@ It is used to test optimization algorithms in 2D space. The typical search range
         """
         X = np.array(X)
         total_dims = self.n_dimension + self.irrelevant_dims
-
-        # Error handling: Check if input dimensions match expected total dimensions
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
         
-        # Single point evaluation (1D)
         if X.ndim == 1:
-            x, y = X  # Unpack x and y
+            x, y = X 
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
-        
-        # Multiple points evaluation (2D)
+
         elif X.ndim == 2:
-            x, y = X[:, 0], X[:, 1]  # Unpack x and y for all points
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
         
-        # Meshgrid input for plotting (3D)
         elif X.ndim == 3:
             X_mesh, Y_mesh = X
             return (1.5 - X_mesh + X_mesh * Y_mesh)**2 + (2.25 - X_mesh + X_mesh * Y_mesh**2)**2 + (2.625 - X_mesh + X_mesh * Y_mesh**3)**2
         
-        # Handling ND input (N > 3)
         else:
-            # Unpack the first two dimensions (x and y) and ignore irrelevant dimensions
             x, y = X[..., 0], X[..., 1]  # Unpack the first two dimensions
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
@@ -218,3 +215,32 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
         else:
             # General case for higher-dimensional inputs (X.ndim > 3)
             return np.sum(X**2, axis=-1)
+
+
+
+class BinaryTreeStructuredFunction(BenchmarkFunctions):
+
+    def __init__(self, n_dimension = 7, noises = 0.0, irrelevant_dims=0):
+        super().__init__(n_dimension, 
+                         search_space_ranges = [(-5.0, 5.0)], 
+                         global_minimum=0, 
+                         global_minimumX=[0]*n_dimension, 
+                         noises = noises, 
+                         irrelevant_dims=irrelevant_dims, 
+                         description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
+                        first three inputs must be binary, the last 4 inputs can take any values within search space """)
+
+    def evaluate(self, X):
+
+        if X[0] == 0:
+            if X[1] == 0:
+                val = X[3]**2 + 0.1 + 0.5
+            else:
+                val = X[4]**2 + 0.2 + 0.5
+        else:
+            if X[2] == 0:
+                val = X[5]**2 + 0.3 + 0.9
+            else:
+                val = X[6]**2 + 0.4 + 0.9
+
+        return val
