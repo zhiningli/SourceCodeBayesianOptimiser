@@ -1,11 +1,19 @@
 import numpy as np
+from typing import List, AnyStr
 import inspect
 
 class BenchmarkFunctions:
-    def __init__(self, n_dimension, search_space_ranges, global_minimum, global_minimumX, noises = 0.0, irrelevant_dims = 0,description=""):
+    def __init__(self, n_dimension: int, 
+                 search_space_ranges: np.array, 
+                 global_minimum: float, 
+                 global_minimumX: np.array, 
+                 noises: float = 0.0, 
+                 irrelevant_dims: int = 0, 
+                 irrelevant_dims_search_space: np.array = np.array([]),
+                 description=""):
         """
         n_dimension: Number of relevant dimensions.
-        search_space_ranges: A list of tuples specifying the search range for each dimension (e.g., [(0, 4.5), (-3, 3)]).
+        search_space_ranges: A numpy array specifying the search space for each input variables np.array([[lowerX1, upperX1], [lowerX2, upperX2], ...]) ).
         global_minimum: The known global minimum value.
         global_minimumX: The known global minimum location for relevant dimensions.
         description: Optional description of the benchmark function.
@@ -17,39 +25,36 @@ class BenchmarkFunctions:
         self.description = description
         self.noise_std = noises
         self.irrelevant_dims = irrelevant_dims
-        self.irrelevant_search_spaces = [] 
+        self.irrelevant_search_spaces = irrelevant_dims_search_space
 
-        self._search_space_ranges = np.array(self._search_space_ranges)
-        self._global_minimumX = np.array(self._global_minimumX)
 
     @property
-    def search_space(self):
+    def search_space(self) -> np.array:
         """
-        Return the search space for the benchmark function, including irrelevant dimensions.
-        Each dimension can have its own search range.
+        Return the search space for the benchmark function as a numpy array, including irrelevant dimensions.
         """
         search_space = self._search_space_ranges.copy()
         if self.irrelevant_dims > 0:
-            search_space += self.irrelevant_search_spaces
+            search_space = np.concatenate((search_space, self.irrelevant_search_spaces), axis=0)
         return search_space
     
     @property
-    def global_minimum(self):
+    def global_minimum(self) -> float:
         """
         Return the known global minimum value.
         """
         return self._global_minimum
     
     @property
-    def global_minimumX(self):
+    def global_minimumX(self) -> np.array:
         """
         Return the known global minimum location, extended with irrelevant dimensions (if any).
         For irrelevant dimensions, a random value within the irrelevant search space will be used.
         """
-        return list(self._global_minimumX) 
+        return np.array(self._global_minimumX) 
     
     @property
-    def describe(self):
+    def describe(self) -> AnyStr:
         """
         Return the description of the benchmark function.
         """
@@ -59,13 +64,13 @@ class BenchmarkFunctions:
         """The actual source code that should be read by our source code reader"""
         pass
 
-    def set_noise(self, noise_std):
+    def set_noise(self, noise_std) -> float:
         """
         Set the standard deviation of the Gaussian noise to be added.
         """
         self.noise_std = noise_std
     
-    def add_irrelevant_dimensions(self, n_irrelevant, irrelevant_search_spaces):
+    def add_irrelevant_dimensions(self, n_irrelevant: int, irrelevant_search_spaces: np.array):
         """
         Add irrelevant (useless) dimensions to the search space, specifying the range for each irrelevant dimension.
         irrelevant_search_spaces: A list of tuples specifying the search range for each irrelevant dimension.
@@ -76,7 +81,7 @@ class BenchmarkFunctions:
         self.irrelevant_dims = n_irrelevant
         self.irrelevant_search_spaces = irrelevant_search_spaces
     
-    def print_dimension_info(self):
+    def print_dimension_info(self) -> AnyStr:
         """
         Print the dimension of the search space, including irrelevant dimensions.
         """
@@ -92,7 +97,7 @@ class BenchmarkFunctions:
         return self.evaluate(X) + np.random.normal(0, self.noise_std)
     
 
-    def get_source_code(self):
+    def get_source_code(self) -> AnyStr:
         """
         Returns the source code of the evaluate function as a string.
         """
@@ -100,16 +105,13 @@ class BenchmarkFunctions:
 
 
 
-
-
-
 class Rastrigin(BenchmarkFunctions):
 
     def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
         super().__init__(n_dimension=n_dimension, 
-                         search_space_ranges=[(-5.12, 5.12)] * n_dimension, 
+                         search_space_ranges=np.array([(-5.12, 5.12)] * n_dimension), 
                          global_minimum=0,
-                         global_minimumX=[0] * n_dimension,
+                         global_minimumX=np.array([0] * n_dimension),
                          noises=noises, 
                          irrelevant_dims=irrelevant_dims,
                          description="""The Rastrigin function is a multi-modal, highly non-convex benchmark function used to test optimization algorithms. 
@@ -144,10 +146,6 @@ It has a global minimum at x=0, where the function value is zero. The typical se
         else:
             return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
         
-
-
-
-
 
 
 class Beale(BenchmarkFunctions):
@@ -200,9 +198,9 @@ It is used to test optimization algorithms in 2D space. The typical search range
 class Sphere(BenchmarkFunctions):
     def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
         super().__init__(n_dimension=n_dimension, 
-                         search_space_ranges=[(-5.12, 5.12)] * n_dimension, 
+                         search_space_ranges=np.array([(-5.12, 5.12)] * n_dimension), 
                          global_minimum=0,
-                         global_minimumX=[0] * n_dimension,
+                         global_minimumX=np.array([0] * n_dimension),
                          noises=noises,
                          irrelevant_dims=irrelevant_dims,
                          description="""The Sphere function is a simple benchmark function for optimization. 
@@ -238,16 +236,13 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
             return np.sum(X**2, axis=-1)
 
 
-
-
-
 class BinaryTreeStructuredFunction(BenchmarkFunctions):
 
     def __init__(self, n_dimension = 7, noises = 0.0, irrelevant_dims=0):
         super().__init__(n_dimension, 
-                         search_space_ranges = [(-5.0, 5.0)], 
+                         search_space_ranges = np.array([(-5.0, 5.0)]*n_dimension), 
                          global_minimum=0, 
-                         global_minimumX=[0]*n_dimension, 
+                         global_minimumX=np.array([0]*n_dimension), 
                          noises = noises, 
                          irrelevant_dims=irrelevant_dims, 
                          description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
