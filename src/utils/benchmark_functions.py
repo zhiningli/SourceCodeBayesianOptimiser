@@ -236,6 +236,7 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
             return np.sum(X**2, axis=-1)
 
 
+
 class BinaryTreeStructuredFunction(BenchmarkFunctions):
 
     def __init__(self, n_dimension = 7, noises = 0.0, irrelevant_dims=0):
@@ -248,7 +249,24 @@ class BinaryTreeStructuredFunction(BenchmarkFunctions):
                          description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
                         first three inputs must be binary, the last 4 inputs can take any values within search space """)
 
+    def _source_code(self, X: np.array):
+        X = X[:, :7]
+
+        if X[0] == 0:
+            if X[1] == 0:
+                val = X[3]**2 + 0.1 + 0.5
+            else:
+                val = X[4]**2 + 0.2 + 0.5
+        else:
+            if X[2] == 0:
+                val = X[5]**2 + 0.3 + 0.9
+            else:
+                val = X[6]**2 + 0.4 + 0.9
+
+        return val    
+    
     def evaluate(self, X):
+        X = X[:, :7]
         if X[0] == 0:
             if X[1] == 0:
                 val = X[3]**2 + 0.1 + 0.5
@@ -261,3 +279,5 @@ class BinaryTreeStructuredFunction(BenchmarkFunctions):
                 val = X[6]**2 + 0.4 + 0.9
 
         return val
+    
+    
