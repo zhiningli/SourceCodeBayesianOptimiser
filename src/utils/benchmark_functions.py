@@ -199,11 +199,6 @@ It is used to test optimization algorithms in 2D space. The typical search range
 
 class Sphere(BenchmarkFunctions):
     def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
-        """
-        Initializes the Sphere function benchmark.
-        The Sphere function is typically used as a basic benchmark function for optimization.
-        It has a global minimum at 0, where f(0) = 0, and is defined for a search space range [-5.12, 5.12].
-        """
         super().__init__(n_dimension=n_dimension, 
                          search_space_ranges=[(-5.12, 5.12)] * n_dimension, 
                          global_minimum=0,
@@ -228,7 +223,7 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
             raise TypeError("Input X must be a numpy array")
 
         total_dims = self.n_dimension + self.irrelevant_dims
-        if X.shape[-1] != total_dims:
+        if X.ndim <= 2 and X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
 
         if X.ndim == 1:
@@ -236,13 +231,12 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
         
         elif X.ndim == 2:
             return np.sum(X**2, axis=1)
-        
+
         elif X.ndim == 3:
-            X, Y = X  
-            return X**2 + Y**2
-        
+            return np.sum(X**2, axis=-1)
         else:
             return np.sum(X**2, axis=-1)
+
 
 
 
