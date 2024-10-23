@@ -193,8 +193,6 @@ It is used to test optimization algorithms in 2D space. The typical search range
             return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
 
-
-
 class Sphere(BenchmarkFunctions):
     def __init__(self, n_dimension, noises=0.0, irrelevant_dims=0):
         super().__init__(n_dimension=n_dimension, 
@@ -240,14 +238,15 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
 class BinaryTreeStructuredFunction(BenchmarkFunctions):
 
     def __init__(self, n_dimension = 7, noises = 0.0, irrelevant_dims=0):
-        super().__init__(n_dimension, 
-                         search_space_ranges = np.array([(-5.0, 5.0)]*n_dimension), 
-                         global_minimum=0, 
-                         global_minimumX=np.array([0]*n_dimension), 
-                         noises = noises, 
-                         irrelevant_dims=irrelevant_dims, 
-                         description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
-                        first three inputs must be binary, the last 4 inputs can take any values within search space """)
+        super().__init__(
+                    n_dimension = n_dimension, 
+                    search_space_ranges = np.array([(-5.0, 5.0)]*n_dimension), 
+                    global_minimum=0, 
+                    global_minimumX=np.array([0]*n_dimension), 
+                    noises = noises, 
+                    irrelevant_dims=irrelevant_dims, 
+                    description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
+                                first three inputs must be binary, the last 4 inputs can take any values within search space """)
 
     def _source_code(self, X: np.array):
         X = X[:, :7]
@@ -265,19 +264,32 @@ class BinaryTreeStructuredFunction(BenchmarkFunctions):
 
         return val    
     
-    def evaluate(self, X):
-        X = X[:, :7]
-        if X[0] == 0:
-            if X[1] == 0:
-                val = X[3]**2 + 0.1 + 0.5
-            else:
-                val = X[4]**2 + 0.2 + 0.5
-        else:
-            if X[2] == 0:
-                val = X[5]**2 + 0.3 + 0.9
-            else:
-                val = X[6]**2 + 0.4 + 0.9
+    def evaluate(self, X: np.array):
+        return self._source_code(X)
 
-        return val
+
+class Dummy3DFunction(BenchmarkFunctions):
+
+    def __init__(self, n_dimension = 3, noises = 0.0, irrelevant_dims=0):
+        super().__init__(
+                    n_dimension = n_dimension, 
+                    search_space_ranges = np.array([(-1.0, 1.0)]*n_dimension), 
+                    global_minimum=0, 
+                    global_minimumX=np.array([0]*n_dimension), 
+                    noises = noises, 
+                    irrelevant_dims=irrelevant_dims, 
+                    description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
+                first three inputs must be binary, the last 4 inputs can take any values within search space """)
+
+    def _source_code(self, X: np.array):
+        X = X[:3]
+        return np.cos(X[0]) / (np.sin(X[1]) + 1) + np.exp(X[2]) 
+    
+
+    def evaluate(self, X: np.array):
+        return self._source_code(X)
+
+
+
     
     
