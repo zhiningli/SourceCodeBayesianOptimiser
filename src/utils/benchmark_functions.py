@@ -235,36 +235,43 @@ is [-5.12, 5.12], and the function is convex and unimodal.""")
 
 
 
-class BinaryTreeStructuredFunction(BenchmarkFunctions):
+class Function_1(BenchmarkFunctions):
 
     def __init__(self, n_dimension = 7, noises = 0.0, irrelevant_dims=0):
         super().__init__(
                     n_dimension = n_dimension, 
-                    search_space_ranges = np.array([(-5.0, 5.0)]*n_dimension), 
-                    global_minimum=0, 
-                    global_minimumX=np.array([0]*n_dimension), 
+                    search_space_ranges = np.array([(-5.0, 5.0)]* n_dimension), 
+                    global_minimum=0.6, 
+                    global_minimumX=np.array([0, 0, 1, 0, 1, 1, 1]), 
                     noises = noises, 
                     irrelevant_dims=irrelevant_dims, 
                     description="""Synthetic binary tree structured function, it has 7 relevant dimensions,
                                 first three inputs must be binary, the last 4 inputs can take any values within search space """)
 
     def _source_code(self, X: np.array):
-        X = X[:, :7]
+
+        X = X[:7]
+        r8 = 0.5
+        r9 = 0.9
 
         if X[0] == 0:
             if X[1] == 0:
-                val = X[3]**2 + 0.1 + 0.5
+                val = X[3]**2 + 0.1 + r8
             else:
-                val = X[4]**2 + 0.2 + 0.5
+                val = X[4]**2 + 0.2 + r8
         else:
             if X[2] == 0:
-                val = X[5]**2 + 0.3 + 0.9
+                val = X[5]**2 + 0.3 + r9
             else:
-                val = X[6]**2 + 0.4 + 0.9
+                val = X[6]**2 + 0.4 + r9
 
         return val    
     
     def evaluate(self, X: np.array):
+
+        if not isinstance(X, np.ndarray):
+            raise TypeError("Input X must be a numpy array")
+
         return self._source_code(X)
 
 
@@ -283,7 +290,7 @@ class Dummy3DFunction(BenchmarkFunctions):
 
     def _source_code(self, X: np.array):
         X = X[:3]
-        return np.cos(X[0]) / (np.sin(X[1]) + 1) + np.exp(X[2]) 
+        return (X[0]-0.5)**2 +X[1]**2 + X[2]**2 
     
 
     def evaluate(self, X: np.array):
