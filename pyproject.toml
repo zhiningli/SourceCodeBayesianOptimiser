@@ -12,6 +12,8 @@ scipy = "^1.14.1"
 [tool.poetry.dev-dependencies]
 numpy = "^2.1.2"
 pytest = "^8.3.3"
+torch = "^2.0"
+gpytorch = "1.13"
 
 [tool.pytest.ini_options]
 pythonpath = [""]

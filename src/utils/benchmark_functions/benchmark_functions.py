@@ -102,6 +102,3 @@ class BenchmarkFunctions:
         Returns the source code of the evaluate function as a string.
         """
         return inspect.getsource(self._source_code)
-
-
-
