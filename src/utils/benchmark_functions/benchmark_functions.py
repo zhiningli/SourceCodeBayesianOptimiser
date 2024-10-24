@@ -275,7 +275,7 @@ class Function_1(BenchmarkFunctions):
         return self._source_code(X)
 
 
-class Dummy3DFunction(BenchmarkFunctions):
+class Function_2(BenchmarkFunctions):
 
     def __init__(self, n_dimension = 3, noises = 0.0, irrelevant_dims=0):
         super().__init__(
