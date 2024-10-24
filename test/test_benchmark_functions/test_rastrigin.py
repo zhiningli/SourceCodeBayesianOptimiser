@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.utils.benchmark_functions.benchmark_functions import Rastrigin
+from src.utils.benchmark_functions.synthetic_functions import Rastrigin
 
 class TestRastrigin(unittest.TestCase):
 

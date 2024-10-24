@@ -1,12 +1,11 @@
 import unittest
 import numpy as np
-from src.utils.benchmark_functions.benchmark_functions import Function_1
+from src.utils.benchmark_functions.synthetic_functions import Function_1
 
 class Test_Synthetic_Function_1(unittest.TestCase):
 
     def setUp(self):
         self.func = Function_1()
-
 
     def test_initialisation(self):
         self.assertEqual(self.func.n_dimension, 7)

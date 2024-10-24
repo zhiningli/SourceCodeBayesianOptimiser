@@ -4,7 +4,7 @@ from src.surrogate.kernels.RBF import RBF
 from src.acquisition.PI import PI
 from src.surrogate.GP import GP
 from src.optimiser.optimiser import Optimiser
-from src.utils.benchmark_functions.benchmark_functions import Sphere, Rastrigin, Beale
+from src.utils.benchmark_functions.synthetic_functions import Sphere, Rastrigin, Beale
 
 class Test_PI_GP_RBF_Optimiser(unittest.TestCase):
 
