@@ -118,34 +118,33 @@ class Rastrigin(BenchmarkFunctions):
 It has a global minimum at x=0, where the function value is zero. The typical search range for each dimension is between -5.12 and 5.12.""") 
     
     def _source_code(self, X):
+        """
+        Source code for the Rastrigin function.
+        Assumes X is a 1D array representing a single input.
+        """
         A = 3
-        return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
+        return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
 
     def evaluate(self, X, A=3):
         """
-        Evaluates the Rastrigin function for a given input X.
-
-        X: Input can be a 1D, 2D, 3D or higher-dimensional input for the Rastrigin function.
-        A: The scale factor (typically set to 10).
+        Evaluates the Rastrigin function for a given 1D input X.
+        
+        Args:
+            X (np.ndarray): A 1D array with n_dimension elements.
+            A (float): The scale factor (typically set to 10).
+        
+        Returns:
+            float: The computed Rastrigin function value for the input X.
         """
         if not isinstance(X, np.ndarray):
-            raise TypeError(f"Input X must be a numpy array")
-
+            raise TypeError("Input X must be a numpy array")
 
         total_dims = self.n_dimension + self.irrelevant_dims
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
-    
-        if X.ndim == 1:
-            return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
-        elif X.ndim == 2:
-            return A * X.shape[1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=1)
-        elif X.ndim == 3:
-            X, Y = X
-            return A * 2 + (X**2 - A * np.cos(2 * np.pi * X)) + (Y**2 - A * np.cos(2 * np.pi * Y))
-        else:
-            return A * X.shape[-1] + np.sum(X**2 - A * np.cos(2 * np.pi * X), axis=-1)
-        
+
+        return A * len(X) + np.sum(X**2 - A * np.cos(2 * np.pi * X))
+
 
 
 class Beale(BenchmarkFunctions):
@@ -158,39 +157,27 @@ class Beale(BenchmarkFunctions):
                          irrelevant_dims=irrelevant_dims,
                          description="""The Beale function is a benchmark function with many local minima near the global minimum at (3, 0.5). 
 It is used to test optimization algorithms in 2D space. The typical search range is between -4.5 and 4.5 for both x and y.""")
-
+    
     def _source_code(self, X):
+        """
+        The source code of the Beale function.
+        Assumes X is a 1D or 2D array (n_samples, n_features).
+        """
         x, y = X[..., 0], X[..., 1]
         return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
 
     def evaluate(self, X):
         """
         Evaluates the Beale function at a given input X.
-
-        X: Can be a single point (1D array), multiple points (2D array), or a meshgrid input (3D for plotting).
         """
         if not isinstance(X, np.ndarray):
             raise TypeError("Input X must be a numpy array")
+        
         total_dims = self.n_dimension + self.irrelevant_dims
         if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
         
-        if X.ndim == 1:
-            x, y = X 
-            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
-
-        elif X.ndim == 2:
-            x, y = X[:, 0], X[:, 1]  # Unpack x and y from 2D array
-            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
-
-        
-        elif X.ndim == 3:
-            X_mesh, Y_mesh = X
-            return (1.5 - X_mesh + X_mesh * Y_mesh)**2 + (2.25 - X_mesh + X_mesh * Y_mesh**2)**2 + (2.625 - X_mesh + X_mesh * Y_mesh**3)**2
-        
-        else:
-            x, y = X[..., 0], X[..., 1] 
-            return (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
+        return self._source_code(X)  # Directly return the evaluation
 
 
 class Sphere(BenchmarkFunctions):
@@ -206,32 +193,27 @@ The global minimum is at (0, 0, ..., 0), where f(0) = 0. The typical search spac
 is [-5.12, 5.12], and the function is convex and unimodal.""")
         
     def _source_code(self, X):
+        """
+        Source code for the Sphere function. Computes the sum of squares for each input.
+        Assumes X is either a 1D or 2D array (n_samples, n_features).
+        """
         return np.sum(X**2, axis=-1)
     
     def evaluate(self, X):
         """
-        Evaluates the Sphere function at a given point X.
-        Supports single point evaluation (1D), multiple points (2D), and meshgrid input (3D).
-        Handles higher-dimensional arrays (ndim > 3) as well.
+        Evaluates the Sphere function at a given input X.
+        Supports single point evaluation (1D array) or multiple points (2D array).
         """
 
         if not isinstance(X, np.ndarray):
             raise TypeError("Input X must be a numpy array")
 
         total_dims = self.n_dimension + self.irrelevant_dims
-        if X.ndim <= 2 and X.shape[-1] != total_dims:
+        if X.shape[-1] != total_dims:
             raise ValueError(f"Input dimension mismatch: expected {total_dims} dimensions but got {X.shape[-1]} dimensions.")
 
-        if X.ndim == 1:
-            return np.sum(X**2)
-        
-        elif X.ndim == 2:
-            return np.sum(X**2, axis=1)
+        return self._source_code(X)
 
-        elif X.ndim == 3:
-            return np.sum(X**2, axis=-1)
-        else:
-            return np.sum(X**2, axis=-1)
 
 
 

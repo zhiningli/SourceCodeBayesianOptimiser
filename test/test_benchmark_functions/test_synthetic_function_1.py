@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from src.utils.benchmark_functions.benchmark_functions import Function_1
 
-class Test_Function_1(unittest.TestCase):
+class Test_Synthetic_Function_1(unittest.TestCase):
 
     def setUp(self):
         self.func = Function_1()

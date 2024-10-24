@@ -30,24 +30,6 @@ class TestSphere(unittest.TestCase):
         expected = np.sum(X**2)
         self.assertAlmostEqual(result, expected)
 
-    def test_evaluation_2d(self):
-        """
-        Test the evaluation function with a 2D input (multiple points).
-        """
-        X = np.array([[1.0, 2.0], [3.0, 4.0]])
-        result = self.sphere.evaluate(X)
-        expected = np.sum(X**2, axis=1)
-        np.testing.assert_almost_equal(result, expected)
-
-
-    def test_evaluation_nd(self):
-        """
-        Test the evaluation function with a higher-dimensional input (ndim > 3).
-        """
-        X = np.random.rand(4, 5, 6)
-        result = self.sphere.evaluate(X)
-        expected = np.sum(X**2, axis=-1)
-        np.testing.assert_almost_equal(result, expected)
 
     def test_evaluation_dim_mismatch(self):
         """

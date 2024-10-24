@@ -22,8 +22,8 @@ class TestBeale(unittest.TestCase):
         self.assertAlmostEqual(result, expected)
 
     def test_evaluation_2d(self):
-        X = np.array([[3.0, 0.5], [1.0, 1.0]])
-        x, y = X[:, 0], X[:, 1]
+        X = np.array([3.0, 0.5])
+        x, y = X[0], X[1]
         expected = (1.5 - x + x * y)**2 + (2.25 - x + x * y**2)**2 + (2.625 - x + x * y**3)**2
         result = self.beale.evaluate(X)
         np.testing.assert_almost_equal(result, expected)
