@@ -195,3 +195,93 @@ SVM_KDD_Cup_1999_dataset = SVMSourceCode.builder().buildDataSet(library="openml"
 
 # Source code SMS Spam Collection dataset - openml
 SVM_SMS_Spam_Collection_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=42195).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Magic Gamma Telescope dataset - openml
+SVM_Magic_Gamma_Telescope_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1120).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Letter Recognition dataset - openml
+SVM_Letter_Recognition_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=6).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Phoneme dataset - openml
+SVM_Phoneme_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1489).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Connect-4 dataset - openml
+SVM_Connect_4_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40685).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Spambase dataset - openml
+SVM_Spambase_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=44).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code CIFAR-10 dataset - openml
+SVM_CIFAR_10_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40927).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code QSAR Biodegradation dataset - openml
+SVM_QSAR_Biodegradation_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1494).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Yeast dataset - openml
+SVM_Yeast_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=181).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Mice Protein Expression dataset - openml
+SVM_Mice_Protein_Expression_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40966).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Occupancy Detection dataset - openml
+SVM_Occupancy_Detection_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1590).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Heart Disease dataset - openml
+SVM_Heart_Disease_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=53).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Wine Quality dataset - openml
+SVM_Wine_Quality_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=187).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Optical Recognition of Handwritten Digits dataset - openml
+SVM_Optical_Recognition_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=28).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Weather Prediction dataset - openml
+SVM_Weather_Prediction_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1515).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Steel Plates Fault dataset - openml
+SVM_Steel_Plates_Fault_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40982).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Gesture Phase Segmentation dataset - openml
+SVM_Gesture_Phase_Segmentation_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=4534).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Banknote Authentication dataset - openml
+SVM_Banknote_Authentication_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1462).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Wilt dataset - openml
+SVM_Wilt_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=469).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Cars Evaluation dataset - openml
+SVM_Cars_Evaluation_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=21).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Poker Hand dataset - openml
+SVM_Poker_Hand_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=354).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Indian Liver Patient dataset - openml
+SVM_Indian_Liver_Patient_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1480).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Forest Fires dataset - openml
+SVM_Forest_Fires_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1124).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Molecular Biology (Promoters) dataset - openml
+SVM_Molecular_Biology_Promoters_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1063).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Thyroid Disease dataset - openml
+SVM_Thyroid_Disease_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40474).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code EEG Eye State dataset - openml
+SVM_EEG_Eye_State_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1471).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Page Blocks Classification dataset - openml
+SVM_Page_Blocks_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=30).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Wilt (Binary Class) dataset - openml
+SVM_Wilt_Binary_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=469).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Gas Sensor Array Drift dataset - openml
+SVM_Gas_Sensor_Array_Drift_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1478).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Blood Transfusion Service Center dataset - openml
+SVM_Blood_Transfusion_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1464).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Pen-Based Recognition of Handwritten Digits (Binary) dataset - openml
+SVM_Pen_Based_Binary_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1485).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
