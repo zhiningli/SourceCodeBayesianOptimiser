@@ -1,11 +1,11 @@
-from data.source_codes.source_code import SVMSourceCode
+from data.source_codes.source_code import SKLearnSVMSourceCode
 
 
-SVM_iris_dataset = SVMSourceCode.builder().buildDataSet('iris').buildKernel('rbf').buildC(0.5).buildGamma("auto").buildCoef0("0.5").build()  
+SVM_iris_dataset = SKLearnSVMSourceCode.builder().buildDataSet('iris').buildKernel('rbf').buildC(0.5).buildGamma("scale").buildCoef0("0.5").build()  
 
 
 print(SVM_iris_dataset.get_source_code)
-print(SVM_iris_dataset.hyperparameters)
+print(SVM_iris_dataset.source_code_hyperparameters)
 print(SVM_iris_dataset.get_optimal_BO_hyperParameters())
 
     

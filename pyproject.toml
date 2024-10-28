@@ -15,6 +15,7 @@ pytest = "^8.3.3"
 torch = "^2.0"
 gpytorch = "1.13"
 botorch = "0.12"
+openml = "0.15"
 
 [tool.pytest.ini_options]
 pythonpath = [""]

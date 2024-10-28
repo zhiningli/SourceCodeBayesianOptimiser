@@ -1,4 +1,4 @@
-from hyperparameterSpace import SVMHyperParameterSpace
+from data.source_codes.hyperparameterSpace import SVMHyperParameterSpace
 from sklearn.svm import SVC
 from typing import List, Dict, Any
 from sklearn import datasets
@@ -6,41 +6,50 @@ from sklearn.model_selection import train_test_split
 
 class SourceCode:
 
-    def __init__(self, description, optimalBayesianHyperparameters):
-        pass
+    def __init__(self, source_code_hyperparameters = None, optimalBOHyperParameters = None):
+        self.optimalBOHyperParameters = optimalBOHyperParameters
+        self.source_code_hyperparameters = source_code_hyperparameters
 
-class SVMSourceCode(SourceCode):
+##################################################################################################################
+#  Structured source code generator that generated from SK-learn library dataset, using SVC model from SK-learn  #
+##################################################################################################################
+class SKLearnSVMSourceCode(SourceCode):
 
     def __init__(self, dataset_name: str = ""):
-        super(SourceCode).__init__()
-        self.optimalBOHyperParameters = None
-        self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
-        self.hyperparameters = {
+        super().__init__(source_code_hyperparameters={
             "kernel": "",
             "C": "",
             "gamma": "",
             "coef0": ""
-        }
+        })
+        self.optimalBOHyperParameters = None
+        self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
         self.dataset_name = self.set_dataset_name(dataset_name)
         self.dataset_loaded = False
         self.X_train, self.X_Test, self.y_train, self.y_test = None, None, None, None
     
     @classmethod
     def builder(cls):
-        return SVMSourceCodeBuilder()
+        return SKlearnSVMSourceCodeBuilder()
 
     @property
     def get_source_code(self):
-        model_initialization = f"model = SVC(kernel='{self.hyperparameters['kernel']}', C={self.hyperparameters['C']}"
+        model_initialization = f"model = SVC(kernel='{self.source_code_hyperparameters['kernel']}', C={self.source_code_hyperparameters['C']}"
 
-        if self.hyperparameters["kernel"] in ["poly", "rbf", "sigmoid"]:
-            model_initialization += f", gamma='{self.hyperparameters['gamma']}'"
-        if self.hyperparameters["kernel"] in ["poly", "sigmoid"]:
-            model_initialization += f", coef0={self.hyperparameters['coef0']}"
+        if self.source_code_hyperparameters["kernel"] in ["poly", "rbf", "sigmoid"]:
+            model_initialization += f", gamma='{self.source_code_hyperparameters['gamma']}'"
+        if self.source_code_hyperparameters["kernel"] in ["poly", "sigmoid"]:
+            model_initialization += f", coef0={self.source_code_hyperparameters['coef0']}"
 
         model_initialization += ", random_state=42)"
 
         return f"""
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn import datasets
+        
 def run_svm_classification():
     # Step 1: Load the dataset
     data = load_{self.dataset_name}()
@@ -51,16 +60,21 @@ def run_svm_classification():
     # Step 2: Split the dataset into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    # Step 3: Initialize the SVM model with hyperparameters
+    # Step 3: Scale the features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Step 4: Initialize the SVM model with hyperparameters
     {model_initialization}
 
-    # Step 4: Train the model
+    # Step 5: Train the model
     model.fit(X_train, y_train)
 
-    # Step 5: Make predictions on the test set
+    # Step 6: Make predictions on the test set
     y_pred = model.predict(X_test)
 
-    # Step 6: Evaluate the model
+    # Step 7: Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred, target_names=target_names)
 
@@ -80,9 +94,9 @@ def run_svm_classification():
         for key, value in kwargs.items():
             if key in self.SVMHyperparameters_searchSpace:
                 if self.SVMHyperparameters_searchSpace[key]["type"] == "categorical" and value in self.SVMHyperparameters_searchSpace[key]["options"]:
-                    self.hyperparameters[key] = value
+                    self.source_code_hyperparameters[key] = value
                 elif self.SVMHyperparameters_searchSpace[key]["type"] == "continuous" and self.SVMHyperparameters_searchSpace[key]["range"][0] <= float(value) <= self.SVMHyperparameters_searchSpace[key]["range"][1]:
-                    self.hyperparameters[key] = value
+                    self.source_code_hyperparameters[key] = value
                 else:
                     raise ValueError("Check the datatype of the input parameters")
                 
@@ -127,15 +141,15 @@ def run_svm_classification():
 
     def create_model(self) -> SVC:
         self._load_dataset()
-        return SVC(**self.hyperparameters)
+        return SVC(**self.source_code_hyperparameters)
 
 
 
-class SVMSourceCodeBuilder:
+class SKlearnSVMSourceCodeBuilder:
     """Builder class for constructing an SVMSourceCode object step-by-step."""
 
     def __init__(self):
-        self._svm_source_code = SVMSourceCode()
+        self._svm_source_code = SKLearnSVMSourceCode()
 
     def buildKernel(self, kernel: str):
         self._svm_source_code.set_SVMhyperparameters(kernel=kernel)
@@ -158,7 +172,12 @@ class SVMSourceCodeBuilder:
         self._svm_source_code.set_dataset_name(dataset_name)
         return self
 
-    def build(self) -> SVMSourceCode:
+    def build(self) -> SKLearnSVMSourceCode:
         """Return the fully constructed SVMSourceCode object."""
         return self._svm_source_code
 
+
+
+##################################################################################################################
+#  Structured source code generator that generated from openml library dataset, using SVC model from SK-learn  #
+##################################################################################################################
