@@ -18,132 +18,28 @@ SVM_iris_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().build
 
 
 # Source codes with digits dataset - sklearn
-SVM_digits_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
-
 SVM_digits_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('linear').buildC(0.5).build()    
-
-SVM_digits_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()    
-
-SVM_digits_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()   
-
-SVM_digits_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
-
-SVM_digits_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()    
-
-SVM_digits_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='digits').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()   
-
 
 # Source codes with wine dataset - sklearn
 SVM_wine_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
 
-SVM_wine_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('linear').buildC(0.5).build()    
-
-SVM_wine_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()    
-
-SVM_wine_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()   
-
-SVM_wine_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_wine_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()    
-
-SVM_wine_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='wine').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build() 
-
-
 # Source codes with diabetes dataset - sklearn
 SVM_diabetes_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
-
-SVM_diabetes_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('linear').buildC(0.5).build()
-
-SVM_diabetes_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_diabetes_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_diabetes_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_diabetes_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_diabetes_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='diabetes').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
 
 # Source codes with breast_cancer dataset - sklearn
 SVM_breast_cancer_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
 
-SVM_breast_cancer_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('linear').buildC(0.5).build()
-
-SVM_breast_cancer_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_breast_cancer_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_breast_cancer_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_breast_cancer_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_breast_cancer_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='breast_cancer').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-
 # Source codes with svmlight_files dataset - sklearn
 SVM_svmlight_files_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
-
-SVM_svmlight_files_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('linear').buildC(0.5).build()
-
-SVM_svmlight_files_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_svmlight_files_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_svmlight_files_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_svmlight_files_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_svmlight_files_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='svmlight_files').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
 
 # Source codes with files dataset - sklearn
 SVM_files_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
 
-SVM_files_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('linear').buildC(0.5).build()
-
-SVM_files_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_files_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_files_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_files_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_files_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='files').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-
 # Source codes with linnerud dataset - sklearn
 SVM_linnerud_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
 
-SVM_linnerud_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('linear').buildC(0.5).build()
-
-SVM_linnerud_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_linnerud_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_linnerud_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_linnerud_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_linnerud_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='linnerud').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-
 # Source codes with sample_images dataset - sklearn
 SVM_sample_images_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
-
-SVM_sample_images_dataset_with_linear_kernel = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('linear').buildC(0.5).build()
-
-SVM_sample_images_dataset_with_poly_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('poly').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_sample_images_dataset_with_sigmoid_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('sigmoid').buildC(0.5).buildGamma("auto").buildCoef0("0.1").build()
-
-SVM_sample_images_dataset_with_rbf_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('rbf').buildC(0.5).buildGamma("scale").build()  
-
-SVM_sample_images_dataset_with_poly_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('poly').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
-SVM_sample_images_dataset_with_sigmoid_kernel_scale_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('sigmoid').buildC(0.5).buildGamma("scale").buildCoef0("0.1").build()
-
 
 # Source codes titanic dataset - openml
 SVM_titanic_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40945).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
@@ -285,3 +181,33 @@ SVM_Blood_Transfusion_dataset = SVMSourceCode.builder().buildDataSet(library="op
 
 # Source code Pen-Based Recognition of Handwritten Digits (Binary) dataset - openml
 SVM_Pen_Based_Binary_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1485).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Breast Cancer Wisconsin (Diagnostic) dataset - openml
+SVM_Breast_Cancer_Wisconsin_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=15).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Seismic-Bumps dataset - openml
+SVM_Seismic_Bumps_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1512).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Ecoli dataset - openml
+SVM_Ecoli_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=617).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Internet Advertisements dataset - openml
+SVM_Internet_Ads_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=3).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Waveform Database Generator (v2) dataset - openml
+SVM_Waveform_v2_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=60).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Magic Gamma Telescope (Imbalanced) dataset - openml
+SVM_Magic_Gamma_Imbalanced_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1460).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Chess (King-Rook vs. King-Pawn) dataset - openml
+SVM_Chess_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=3).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Lymphography dataset - openml
+SVM_Lymphography_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1480).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Heart Disease (Cleveland) dataset - openml
+SVM_Heart_Disease_Cleveland_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=901).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+# Source code Dermatology dataset - openml
+SVM_Dermatology_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=35).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
