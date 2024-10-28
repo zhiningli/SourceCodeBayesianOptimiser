@@ -3,19 +3,21 @@ from sklearn.svm import SVC
 from typing import List, Dict, Any
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+import openml
 
 class SourceCode:
 
-    def __init__(self, source_code_hyperparameters = None, optimalBOHyperParameters = None):
+    def __init__(self, source_code_hyperparameters=None, optimalBOHyperParameters=None):
         self.optimalBOHyperParameters = optimalBOHyperParameters
         self.source_code_hyperparameters = source_code_hyperparameters
+
 
 ##################################################################################################################
 #  Structured source code generator that generated from SK-learn library dataset, using SVC model from SK-learn  #
 ##################################################################################################################
-class SKLearnSVMSourceCode(SourceCode):
+class SVMSourceCode(SourceCode):
 
-    def __init__(self, dataset_name: str = ""):
+    def __init__(self, dataset_name: str = "", library: str = "sklearn", dataset_id: int = None):
         super().__init__(source_code_hyperparameters={
             "kernel": "",
             "C": "",
@@ -24,38 +26,66 @@ class SKLearnSVMSourceCode(SourceCode):
         })
         self.optimalBOHyperParameters = None
         self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
-        self.dataset_name = self.set_dataset_name(dataset_name)
+        self.dataset_name = dataset_name
+        self.dataset_id = dataset_id
+        self.library = library
         self.dataset_loaded = False
-        self.X_train, self.X_Test, self.y_train, self.y_test = None, None, None, None
+        self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
     
     @classmethod
     def builder(cls):
-        return SKlearnSVMSourceCodeBuilder()
+        return SVMSourceCodeBuilder()
 
     @property
     def get_source_code(self):
-        model_initialization = f"model = SVC(kernel='{self.source_code_hyperparameters['kernel']}', C={self.source_code_hyperparameters['C']}"
+        # Define data import code snippets for different libraries
+        dataImportSourceCode = {
+            "sklearn": {
+                "importText": f"""
+from sklearn import datasets
+""", 
+                "loadDataText": 
+                f"""
+    data = datasets.load_{self.dataset_name}()
+    X, y = data.data, data.target
+    feature_names = data.feature_names
+    target_names = data.target_names
+"""},
+            "openml": {
+                "importText": f"""
+import openml
+""", 
+                "loadDataText": 
+                f"""
+    dataset = openml.datasets.get_dataset({self.dataset_id})
+    X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
+    feature_names = dataset.feature_names
+    target_names = dataset.target_names
+"""}
+        }
+        
+        # Select the appropriate data import code based on the library
+        data_loading_code = dataImportSourceCode.get(self.library, "")
 
+        # Initialize SVM model with hyperparameters
+        model_initialization = f"model = SVC(kernel='{self.source_code_hyperparameters['kernel']}', C={self.source_code_hyperparameters['C']}"
         if self.source_code_hyperparameters["kernel"] in ["poly", "rbf", "sigmoid"]:
             model_initialization += f", gamma='{self.source_code_hyperparameters['gamma']}'"
         if self.source_code_hyperparameters["kernel"] in ["poly", "sigmoid"]:
             model_initialization += f", coef0={self.source_code_hyperparameters['coef0']}"
-
         model_initialization += ", random_state=42)"
 
+        # Generate complete source code
         return f"""
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report
-from sklearn import datasets
-        
+{data_loading_code["importText"]}
+
 def run_svm_classification():
     # Step 1: Load the dataset
-    data = load_{self.dataset_name}()
-    X, y = data.data, data.target
-    feature_names = data.feature_names
-    target_names = data.target_names
+    {data_loading_code["loadDataText"]}
 
     # Step 2: Split the dataset into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
@@ -99,17 +129,7 @@ def run_svm_classification():
                     self.source_code_hyperparameters[key] = value
                 else:
                     raise ValueError("Check the datatype of the input parameters")
-                
-    
-    def set_dataset_name(self, dataset_name: str):
-        if dataset_name == "":
-            return
-        dataset_names = set(["iris", "digits", "wine", "diabetes", "breast_cancer", "svmlight_files", "files", "linnerud", "sample_images"])
-        if dataset_name in dataset_names:
-            self.dataset = dataset_name
-        else:
-            raise ValueError(f"Dataset {dataset_name} is not recognised. Currently only scikit learn datasets are supported")
-        
+
     def _load_dataset(self):
         """Lazy loads the dataset based on the dataset name."""
         if self.dataset_loaded:
@@ -124,14 +144,6 @@ def run_svm_classification():
             data = datasets.load_diabetes()
         elif self.dataset_name == "breast_cancer":
             data = datasets.load_breast_cancer()
-        elif self.dataset_name == "svmlight_files":
-            data = datasets.load_svmlight_files() 
-        elif self.dataset_name == "files":
-            data = datasets.load_files()
-        elif self.dataset_name == "linnerud":
-            data = datasets.load_linnerud()
-        elif self.dataset_name == "sample_images":
-            data = datasets.load_sample_images() 
         else:
             raise ValueError(f"Dataset '{self.dataset_name}' not recognized.")
         
@@ -144,12 +156,11 @@ def run_svm_classification():
         return SVC(**self.source_code_hyperparameters)
 
 
-
-class SKlearnSVMSourceCodeBuilder:
+class SVMSourceCodeBuilder:
     """Builder class for constructing an SVMSourceCode object step-by-step."""
 
     def __init__(self):
-        self._svm_source_code = SKLearnSVMSourceCode()
+        self._svm_source_code = SVMSourceCode()
 
     def buildKernel(self, kernel: str):
         self._svm_source_code.set_SVMhyperparameters(kernel=kernel)
@@ -167,17 +178,14 @@ class SKlearnSVMSourceCodeBuilder:
         self._svm_source_code.set_SVMhyperparameters(coef0=coef0)
         return self
 
-    def buildDataSet(self, dataset_name: str):
-        """Set only the dataset name for lazy loading later."""
-        self._svm_source_code.set_dataset_name(dataset_name)
+    def buildDataSet(self, library: str, dataset_id: int = None, dataset_name = None):
+        """Set the library and dataset ID if applicable."""
+        self._svm_source_code.library = library
+        self._svm_source_code.dataset_id = dataset_id
+        self._svm_source_code.dataset_name = dataset_name
         return self
 
-    def build(self) -> SKLearnSVMSourceCode:
+    def build(self) -> SVMSourceCode:
         """Return the fully constructed SVMSourceCode object."""
         return self._svm_source_code
 
-
-
-##################################################################################################################
-#  Structured source code generator that generated from openml library dataset, using SVC model from SK-learn  #
-##################################################################################################################
