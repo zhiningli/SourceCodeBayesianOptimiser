@@ -13,7 +13,7 @@ class SourceCode:
 
 
 ##################################################################################################################
-#  Structured source code generator that generated from SK-learn library dataset, using SVC model from SK-learn  #
+#  Structured source code that generated from various libraries' dataset, using SVC model from SK-learn          #
 ##################################################################################################################
 class SVMSourceCode(SourceCode):
 

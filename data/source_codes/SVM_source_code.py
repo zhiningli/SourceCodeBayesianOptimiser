@@ -1,6 +1,10 @@
 from source_code import SVMSourceCode
 
 
+
+####################################################################
+#  Structured source code generated for sk-learn datasets          #
+####################################################################
 # Source codes with iris dataset  - sklearn
 SVM_iris_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='iris').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
 
@@ -40,6 +44,11 @@ SVM_linnerud_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildD
 
 # Source codes with sample_images dataset - sklearn
 SVM_sample_images_dataset_with_rbf_kernel_auto_gamma = SVMSourceCode.builder().buildDataSet(library="sklearn", dataset_name='sample_images').buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
+
+
+####################################################################
+#  Structured source code generated for sk-learn datasets          #
+####################################################################
 
 # Source codes titanic dataset - openml
 SVM_titanic_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=40945).buildKernel('rbf').buildC(0.5).buildGamma("auto").build()  
