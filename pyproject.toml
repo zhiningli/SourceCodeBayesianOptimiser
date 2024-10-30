@@ -16,6 +16,7 @@ torch = "^2.0"
 gpytorch = "1.13"
 botorch = "0.12"
 openml = "0.15"
+pymongo = "4.10.1"
 
 [tool.pytest.ini_options]
 pythonpath = [""]

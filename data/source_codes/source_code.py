@@ -17,7 +17,7 @@ class SourceCode:
 ##################################################################################################################
 class SVMSourceCode(SourceCode):
 
-    def __init__(self, dataset_name: str = "", library: str = "sklearn", dataset_id: int = None):
+    def __init__(self):
         super().__init__(source_code_hyperparameters={
             "kernel": "",
             "C": "",
@@ -25,15 +25,15 @@ class SVMSourceCode(SourceCode):
             "coef0": ""
         })
 
-        self.dataset_name = dataset_name
-        self.dataset_id = dataset_id
-        self.library = library
-        self.dataset_loaded = False
-        self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
+        self.dataset_name = None
+        self.dataset_id = None
+        self.library = None
+        self.name = None
 
         self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
-
-        self.BOHyperparametersSearchSpace = self._generateBOHyperparameterSearchSpace()
+        self.BOHyperparameters_searchSpace = self._generateBOHyperparameterSearchSpace()
+        
+        self.optimalSVMHyperparameter = None
         self.optimalBOHyperParameters = None
 
     
@@ -134,31 +134,6 @@ def run_svm_classification():
                     self.source_code_hyperparameters[key] = value
                 else:
                     raise ValueError("Check the datatype of the input parameters")
-
-    def _load_dataset(self):
-        """Lazy loads the dataset based on the dataset name."""
-        if self.dataset_loaded:
-            return
-        if self.dataset_name == "iris":
-            data = datasets.load_iris()
-        elif self.dataset_name == "digits":
-            data = datasets.load_digits()
-        elif self.dataset_name == "wine":
-            data = datasets.load_wine()
-        elif self.dataset_name == "diabetes":
-            data = datasets.load_diabetes()
-        elif self.dataset_name == "breast_cancer":
-            data = datasets.load_breast_cancer()
-        else:
-            raise ValueError(f"Dataset '{self.dataset_name}' not recognized.")
-        
-        X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.3, random_state=42)
-        self.X_train, self.X_test, self.y_train, self.y_test = X_train, X_test, y_train, y_test
-        self.dataset_loaded = True
-
-    def create_model(self) -> SVC:
-        self._load_dataset()
-        return SVC(**self.source_code_hyperparameters)
     
     def _generateBOHyperparameterSearchSpace(self):
         dims = len(self.source_code_hyperparameters.keys())
@@ -168,6 +143,8 @@ def run_svm_classification():
             bOHyperparameterSpace["GPHyperParameter"]["kernel"][kernel]["length_scale"] = np.array([0.1, 10.0] * dims)
         return bOHyperparameterSpace
 
+    def generate_name(self):
+        return f"""SVM_source_code_on_{self.library}_{self.dataset_name if self.dataset_name else ""}{self.dataset_id if self.dataset_id else ""}_dataset"""
 
 
 class SVMSourceCodeBuilder:
@@ -197,6 +174,8 @@ class SVMSourceCodeBuilder:
         self._svm_source_code.library = library
         self._svm_source_code.dataset_id = dataset_id
         self._svm_source_code.dataset_name = dataset_name
+
+        self._svm_source_code.name = self._svm_source_code.generate_name()
         return self
 
     def build(self) -> SVMSourceCode:
