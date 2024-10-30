@@ -1,9 +1,9 @@
-from data.source_codes.hyperparameterSpace import SVMHyperParameterSpace
+from data.source_codes.hyperparameterSpace import SVMHyperParameterSpace, BOHyperparameterSpace
 from sklearn.svm import SVC
 from typing import List, Dict, Any
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-import openml
+import numpy as np
 
 class SourceCode:
 
@@ -24,13 +24,18 @@ class SVMSourceCode(SourceCode):
             "gamma": "",
             "coef0": ""
         })
-        self.optimalBOHyperParameters = None
-        self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
+
         self.dataset_name = dataset_name
         self.dataset_id = dataset_id
         self.library = library
         self.dataset_loaded = False
         self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
+
+        self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
+
+        self.BOHyperparametersSearchSpace = self._generateBOHyperparameterSearchSpace()
+        self.optimalBOHyperParameters = None
+
     
     @classmethod
     def builder(cls):
@@ -154,6 +159,15 @@ def run_svm_classification():
     def create_model(self) -> SVC:
         self._load_dataset()
         return SVC(**self.source_code_hyperparameters)
+    
+    def _generateBOHyperparameterSearchSpace(self):
+        dims = len(self.source_code_hyperparameters.keys())
+        bOHyperparameterSpace = BOHyperparameterSpace
+
+        for kernel in bOHyperparameterSpace["GPHyperParameter"]["kernel"]["options"]:
+            bOHyperparameterSpace["GPHyperParameter"]["kernel"][kernel]["length_scale"] = np.array([0.1, 10.0] * dims)
+        return bOHyperparameterSpace
+
 
 
 class SVMSourceCodeBuilder:
