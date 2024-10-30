@@ -29,6 +29,7 @@ class SVMSourceCode(SourceCode):
         self.dataset_id = None
         self.library = None
         self.name = None
+        self.source_code_type = "SVM"
 
         self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
         self.BOHyperparameters_searchSpace = self._generateBOHyperparameterSearchSpace()
