@@ -136,11 +136,11 @@ def run_svm_classification():
                     raise ValueError("Check the datatype of the input parameters")
     
     def _generateBOHyperparameterSearchSpace(self):
-        dims = len(self.source_code_hyperparameters.keys())
         bOHyperparameterSpace = BOHyperparameterSpace
 
         for kernel in bOHyperparameterSpace["GPHyperParameter"]["kernel"]["options"]:
-            bOHyperparameterSpace["GPHyperParameter"]["kernel"][kernel]["length_scale"] = np.array([0.1, 10.0] * dims)
+            for dim in ["kernel", "gamma","C", "coef0"]:
+                bOHyperparameterSpace["GPHyperParameter"]["kernel"][kernel]["length_scale"][dim] = self.SVMHyperparameters_searchSpace[dim]         
         return bOHyperparameterSpace
 
     def generate_name(self):

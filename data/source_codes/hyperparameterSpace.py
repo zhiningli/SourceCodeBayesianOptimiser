@@ -29,18 +29,18 @@ BOHyperparameterSpace = {
             "options": ["RBF", "Matern", "RationalQuadratic", "ExpSineSquared"],
             "type": "categorical",
                 "RBF": {
-                    "length_scale": {"range": np.array([0.1, 10.0]), "type": "continuous"}
+                    "length_scale": {}
                 },
                 "Matern": {
-                    "length_scale": {"range": np.array([0.1, 10.0]), "type": "continuous"},
+                    "length_scale": {},
                     "nu": {"options": np.array([0.5, 1.5, 2.5]), "type": "categorical"}
                 },
                 "RationalQuadratic": {
-                    "length_scale": {"range": np.array([0.1, 10.0]), "type": "continuous"},
+                    "length_scale": {},
                     "alpha": {"range": [0.1, 2.0], "type": "continuous"}
                 },
                 "ExpSineSquared": {
-                    "length_scale": {"range": np.array([0.1, 10.0]), "type": "continuous"},
+                    "length_scale": {},
                     "periodicity": {"range": np.array([0.1, 2.0]), "type": "continuous"}
                 }
         }
