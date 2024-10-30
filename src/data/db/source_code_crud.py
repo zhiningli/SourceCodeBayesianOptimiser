@@ -2,6 +2,12 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from datetime import datetime
 
+
+class SourceCodeStatus(Enum):
+    GENERATED_FROM_TEMPLATE = "generated_from_template"
+    VALIDATED_TO_RUN = "validated_to_run"
+
+
 class SourceCodeRepository:
     def __init__(self, db_url="mongodb://localhost:27017/", db_name="source_code_database", collection_name="source_code_collection"):
         self.client = MongoClient(db_url)

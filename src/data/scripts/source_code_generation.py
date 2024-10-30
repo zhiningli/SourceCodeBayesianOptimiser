@@ -6,15 +6,9 @@ from enum import Enum
 
 from src.data.data_models import SVMHyperParameterSpace
 from src.data.source_code_generator import SVMSourceCode
-from src.data.db.source_code_crud import SourceCodeRepository
+from src.data.db.source_code_crud import SourceCodeRepository, SourceCodeStatus
 
 logging.basicConfig(level=logging.INFO)
-
-
-
-class SourceCodeStatus(Enum):
-    GENERATED_FROM_TEMPLATE = "generated_from_template"
-    VALIDATED_TO_RUN = "validated_to_run"
 
 # Load dataset sources from external JSON configuration
 def load_data_sources(filename="src/data/scripts/data_sources.json"):
