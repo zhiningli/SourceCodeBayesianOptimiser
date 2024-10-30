@@ -20,21 +20,8 @@ class SourceCodeRepository:
             return None
 
     def save_source_codes_batch(self, source_code_objects, status):
-        """
-        Batch process method for saving multiple source code objects without transactions.
-        
-        Parameters:
-            source_code_objects (list): List of source code objects to insert.
-            status (str): Status to be assigned to all source code objects.
-
-        Returns:
-            list: List of inserted document IDs if successful, or an empty list if the batch failed.
-        """
-        # Prepare the list of documents to be inserted
         documents = [self._prepare_document(obj, status) for obj in source_code_objects]
-
         try:
-            # Perform batch insert without a transaction
             result = self.collection.insert_many(documents)
             print(f"Batch insert successful with record ids {result.inserted_ids}")
             return result.inserted_ids
@@ -42,8 +29,59 @@ class SourceCodeRepository:
             print("Connection failure:", e)
             return []
 
-    def get_source_code(self, record_id):
-        return self.collection.find_one({"_id": record_id})
+    def get_source_code(self, record_id=None, name=None, source_code_type=None, library=None):
+        """
+        Retrieve a single source code document from the database based on given filters.
+        
+        Parameters:
+            record_id: The MongoDB ObjectId of the document.
+            name: The name of the source code document.
+            source_code_type: The type of the source code (e.g., "SVM").
+            library: The library associated with the dataset (e.g., "sklearn", "openml").
+
+        Returns:
+            dict: The source code document, or None if no document is found.
+        """
+        query = {}
+        
+        # Build query based on provided parameters
+        if record_id:
+            query["_id"] = record_id
+        if name:
+            query["name"] = name
+        if source_code_type:
+            query["source_code_type"] = source_code_type
+        if library:
+            query["dataset_info.dataset_library"] = library
+
+        # Execute the query and return a single document
+        return self.collection.find_one(query)
+
+    def find_source_codes(self, name=None, source_code_type=None, library=None, limit=10):
+        """
+        Retrieve multiple source code documents from the database based on given filters.
+        
+        Parameters:
+            name: The name of the source code documents to search.
+            source_code_type: The type of the source code (e.g., "SVM").
+            library: The library associated with the dataset (e.g., "sklearn", "openml").
+            limit: The maximum number of documents to return.
+
+        Returns:
+            list: A list of source code documents that match the criteria.
+        """
+        query = {}
+        
+        # Build query based on provided parameters
+        if name:
+            query["name"] = name
+        if source_code_type:
+            query["source_code_type"] = source_code_type
+        if library:
+            query["dataset_info.dataset_library"] = library
+
+        # Execute the query and return multiple documents
+        return list(self.collection.find(query).limit(limit))
 
     def update_source_code(self, record_id, update_data):
         try:
