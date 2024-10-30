@@ -1,4 +1,4 @@
-from data.source_codes.source_code import SVMSourceCode
+from data.source_codes.source_code_builder import SVMSourceCode
 from datetime import datetime
 from pymongo import MongoClient
 
@@ -6,7 +6,6 @@ SVM_iris_dataset = SVMSourceCode.builder().buildDataSet(library="openml", datase
 
 def saveSourceCodeToMongoDB(source_code_object, status):
     
-
     data = {
         "name": source_code_object.name,
         "source_code": source_code_object.get_source_code,

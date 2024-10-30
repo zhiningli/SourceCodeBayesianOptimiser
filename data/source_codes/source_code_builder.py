@@ -1,4 +1,4 @@
-from data.source_codes.hyperparameterSpace import SVMHyperParameterSpace, BOHyperparameterSpace
+from data.data_models import SVMHyperParameterSpace, BOHyperparameterSpace
 from sklearn.svm import SVC
 from typing import List, Dict, Any
 from sklearn import datasets
