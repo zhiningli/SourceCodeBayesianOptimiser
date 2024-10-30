@@ -1,35 +1,78 @@
-from data.source_codes.source_code_builder import SVMSourceCode
-from datetime import datetime
-from pymongo import MongoClient
+import random
+import numpy as np
+import json
+import logging
+from enum import Enum
 
-SVM_iris_dataset = SVMSourceCode.builder().buildDataSet(library="openml", dataset_id=1597).buildKernel('rbf').buildC(0.5).buildGamma("scale").buildCoef0("0.5").build()  
+from src.data.data_models import SVMHyperParameterSpace
+from src.data.source_codes.source_code_builder import SVMSourceCode
+from src.data.db.source_code_crud import SourceCodeRepository
 
-def saveSourceCodeToMongoDB(source_code_object, status):
-    
-    data = {
-        "name": source_code_object.name,
-        "source_code": source_code_object.get_source_code,
-        "source_code_hyperparameters": source_code_object.source_code_hyperparameters,
-        "optimalBOHyperparameters": source_code_object.optimalBOHyperParameters,
-        "dataset_info": {
-            "dataset_library": source_code_object.library,
-            "dataset_id": source_code_object.dataset_id,
-            "dataset_name": source_code_object.dataset_name,
-        },
-        "status": status,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+logging.basicConfig(level=logging.INFO)
 
-    client = MongoClient("mongodb://localhost:27017/")
+class SourceCodeStatus(Enum):
+    GENERATED_FROM_TEMPLATE = "generated_from_template"
+    VALIDATED_TO_RUN = "validated_to_run"
 
-    db = client["source_code_database"]
-    collection = db["source_code_collection"]
+# Load dataset sources from external JSON configuration
+def load_data_sources(filename="src/data/scripts/data_sources.json"):
+    with open(filename, "r") as file:
+        return json.load(file)
 
-    result = collection.insert_one(data)
-    print(f"Data inserted with record id {result.inserted_id}")
+# Generate random hyperparameters
+def generate_random_hyperparameters():
+    kernel = random.choice(SVMHyperParameterSpace["kernel"]["options"])
+    C = np.random.uniform(low=SVMHyperParameterSpace["C"]["range"][0], high=SVMHyperParameterSpace["C"]["range"][1])
+    gamma = random.choice(SVMHyperParameterSpace["gamma"]["options"])
+    coef0 = np.random.uniform(low=SVMHyperParameterSpace["coef0"]["range"][0], high=SVMHyperParameterSpace["coef0"]["range"][1])
+    return kernel, C, gamma, coef0
 
-    retrieved_data = collection.find_one({"_id": result.inserted_id})
+# Create source code instances for each dataset
+def create_source_codes(data_source, variations=4):
+    source_codes = []
+    for library, datasets in data_source.items():
+        for dataset in datasets:
+            for _ in range(variations):
+                kernel, C, gamma, coef0 = generate_random_hyperparameters()
+                
+                # Use dataset_name or dataset_id depending on the library
+                if library == "sklearn":
+                    source_code = (SVMSourceCode.builder()
+                                   .buildDataSet(library=library, dataset_name=dataset)
+                                   .buildKernel(kernel)
+                                   .buildC(C)
+                                   .buildGamma(gamma)
+                                   .buildCoef0(coef0)
+                                   .build())
+                elif library == "openml":
+                    source_code = (SVMSourceCode.builder()
+                                   .buildDataSet(library=library, dataset_id=dataset)
+                                   .buildKernel(kernel)
+                                   .buildC(C)
+                                   .buildGamma(gamma)
+                                   .buildCoef0(coef0)
+                                   .build())
+                
+                source_codes.append(source_code)
+    return source_codes
 
-    print("retrieved data: ", retrieved_data)
+# Save batch to the database
+def save_batch_to_db(source_codes):
+    source_code_repo = SourceCodeRepository()
+    try:
+        # Convert Enum to string
+        status = SourceCodeStatus.GENERATED_FROM_TEMPLATE.value
+        source_code_repo.save_source_codes_batch(source_codes, status)
+        logging.info("Batch saved successfully")
+    except Exception as e:
+        logging.error("Failed to save batch: %s", e)
 
-saveSourceCodeToMongoDB(SVM_iris_dataset, "generated_from_template")
+
+# Main function
+def main():
+    data_source = load_data_sources()
+    source_codes = create_source_codes(data_source, variations=4)
+    save_batch_to_db(source_codes)
+
+if __name__ == "__main__":
+    main()

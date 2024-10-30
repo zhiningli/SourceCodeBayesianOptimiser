@@ -1,4 +1,4 @@
-from data.source_codes.source_code_builder import SVMSourceCode
+from src.data.source_codes.source_code_builder import SVMSourceCode
 
 
 ####################################################################
