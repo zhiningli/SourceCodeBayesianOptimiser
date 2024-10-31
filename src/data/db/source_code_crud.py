@@ -17,7 +17,6 @@ class SourceCodeRepository:
     def save_source_code(self, source_code_object, status):
         try:
             data = self._prepare_document(source_code_object, status)
-            # Insert the document without a transaction
             result = self.collection.insert_one(data)
             print(f"Data inserted with record id {result.inserted_id}")
             return result.inserted_id
