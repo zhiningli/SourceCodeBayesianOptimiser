@@ -39,32 +39,30 @@ class SVMSourceCode(SourceCode):
 
     @property
     def get_source_code(self):
-        # Define data import code snippets for different libraries
+
         dataImportSourceCode = {
             "sklearn": {
-                "importText": f"""
+                "importText": """
 from sklearn import datasets
-""", 
-                "loadDataText": 
-                f"""
+    """,
+                "loadDataText": f"""
     data = datasets.load_{self.dataset_name}()
     X, y = data.data, data.target
-    feature_names = data.feature_names
     target_names = data.target_names
-"""},
+    """
+            },
             "openml": {
-                "importText": f"""
+                "importText": """
 import openml
-""", 
-                "loadDataText": 
-                f"""
-    dataset = openml.datasets.get_dataset({self.dataset_id})
+    """,
+                "loadDataText": f"""
+    dataset = openml.datasets.get_dataset(dataset_id={self.dataset_id})
     X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute)
-    feature_names = dataset.feature_names
-    target_names = dataset.target_names
-"""}
+    target_names = dataset.retrieve_class_labels() if dataset.retrieve_class_labels() else None
+    """
+            }
         }
-        
+
         # Select the appropriate data import code based on the library
         data_loading_code = dataImportSourceCode.get(self.library, "")
 
@@ -84,7 +82,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report
 {data_loading_code["importText"]}
 
-def run_svm_classification():
+def run_svm_classification(dataset_id=None):
     # Step 1: Load the dataset
     {data_loading_code["loadDataText"]}
 
@@ -112,6 +110,7 @@ def run_svm_classification():
     print("Model Accuracy:", accuracy)
     print("\\nClassification Report:\\n", report)
 """
+
     
     def get_optimal_BO_hyperParameters(self):
         if not self.optimalBOHyperParameters:

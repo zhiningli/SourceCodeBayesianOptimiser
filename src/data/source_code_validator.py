@@ -64,7 +64,6 @@ class SourceCodeValidator:
         Iteratively refine and validate the source code.
         """
         code = initial_code
-        logging.info(code)
         for i in range(max_iteration):
             logging.info(f"Iteration {i + 1}: Validating code...")
             if self.validate_source_code(code):
