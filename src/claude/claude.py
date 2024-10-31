@@ -1,10 +1,11 @@
 import anthropic
+import os
 
 class Claude:
 
     def __init__(self,
-                 api_key: str = "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 "):
-        self.api_key = api_key
+                 api_key: str = None):
+        self.api_key = api_key or os.getenv("CLAUDE_API_KEY")
 
     def call_claude(self,
                     propmt: str,
