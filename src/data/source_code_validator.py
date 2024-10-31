@@ -1,13 +1,14 @@
 import logging
-from src.data.claude_prompts.data_validation_prompt import source_code_validation_prompt
-from src.claude.claude import Claude 
+import traceback
+from src.data.mistral_prompts.data_validation_prompt import source_code_validation_prompt
+from src.mistral.mistral import MistralClient
 
 logging.basicConfig(level=logging.INFO)
 
 class SourceCodeValidator:
     
     def __init__(self):
-        self.claude = Claude()
+        self.mistral = MistralClient()
         self.source_code = None
         self.prompt = None
         self.last_error = None
@@ -23,17 +24,19 @@ class SourceCodeValidator:
         code_str
 
         Return:
-        bool: True if the code is run successfully
+        bool: True if the code runs successfully
         """
         try:
             namespace = {}
             exec(code_str, namespace)
-            namespace["run_classification"]()
+            namespace["run_svm_classification"]()  # Updated to match the function name in code_str
             return True
         except Exception as e:
-            logging.error("Execution failed with error: %s", e)
-            self.last_error = str(e)
+            error_message = traceback.format_exc()
+            logging.error("Execution failed with error: %s", error_message)
+            self.last_error = error_message
             return False
+
     
     def refine_code_with_llm(self, code_str, error_msg):
         """
@@ -51,9 +54,9 @@ class SourceCodeValidator:
             error_message=error_msg
         )
         
-        refined_code = self.claude.call_claude(prompt)
+        refined_code = self.mistral.call_codestral(prompt)
         
-        return refined_code.strip()
+        return refined_code
     
     
     def iterative_refinement_and_validation(self, initial_code, max_iteration=5):
@@ -69,8 +72,9 @@ class SourceCodeValidator:
                 logging.info("Code validated and saved")
                 return True
             else:
-                scratchpad = self.refine_code_with_llm(code, self.last_error)
-                code = self.claude.extract_tag(scratchpad, "source_code")
+                response = self.refine_code_with_llm(code, self.last_error)
+                code = self.mistral.extract_code_block(response)
+                logging.info(f"New code block from mistral: {code}")
         
         logging.warning("Max iteration reached, code could not be validated")
         return False
