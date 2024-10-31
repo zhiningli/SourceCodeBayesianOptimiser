@@ -1,12 +1,12 @@
 import logging
 from src.data.claude_prompts.data_validation_prompt import source_code_validation_prompt
-from claude.claude import Claude 
+from src.claude.claude import Claude 
 
 logging.basicConfig(level=logging.INFO)
 
 class SourceCodeValidator:
     
-    def __init__(self, api_key):
+    def __init__(self):
         self.claude = Claude()
         self.source_code = None
         self.prompt = None
@@ -61,6 +61,7 @@ class SourceCodeValidator:
         Iteratively refine and validate the source code.
         """
         code = initial_code
+        logging.info(code)
         for i in range(max_iteration):
             logging.info(f"Iteration {i + 1}: Validating code...")
             if self.validate_source_code(code):

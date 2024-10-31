@@ -1,6 +1,7 @@
 import anthropic
 import os
 import re
+import logging
 
 class Claude:
 
@@ -8,6 +9,7 @@ class Claude:
                  api_key: str = None):
         
         self.api_key = api_key or os.getenv("CLAUDE_API_KEY")
+        logging.info(f"checking claude api key: {self.api_key}")
     def call_claude(self,
                     propmt: str,
                     max_tokens: int = 4000,

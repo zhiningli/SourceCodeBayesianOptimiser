@@ -18,6 +18,7 @@ botorch = "0.12"
 openml = "0.15"
 pymongo = "4.10.1"
 anthropic = "0.37.1"
+mistralai = "1.1.0"
 
 [tool.pytest.ini_options]
 pythonpath = [""]
