@@ -6,6 +6,7 @@ from enum import Enum
 class SourceCodeStatus(Enum):
     GENERATED_FROM_TEMPLATE = "generated_from_template"
     VALIDATED_TO_RUN = "validated_to_run"
+    FAILED_VALIDATION = "failed_validation"
 
 
 class SourceCodeRepository:
@@ -34,7 +35,7 @@ class SourceCodeRepository:
             print("Connection failure:", e)
             return []
 
-    def get_source_code(self, record_id=None, name=None, source_code_type=None, library=None):
+    def get_source_code(self, record_id=None, name=None, source_code_type=None, library=None, status = None):
         """
         Retrieve a single source code document from the database based on given filters.
         
@@ -58,11 +59,13 @@ class SourceCodeRepository:
             query["source_code_type"] = source_code_type
         if library:
             query["dataset_info.dataset_library"] = library
+        if status:
+            query["status"] = status
 
         # Execute the query and return a single document
         return self.collection.find_one(query)
 
-    def find_source_codes(self, name=None, source_code_type=None, library=None, limit=10):
+    def find_source_codes(self, name=None, source_code_type=None, library=None, status=None, limit=10):
         """
         Retrieve multiple source code documents from the database based on given filters.
         
@@ -84,6 +87,8 @@ class SourceCodeRepository:
             query["source_code_type"] = source_code_type
         if library:
             query["dataset_info.dataset_library"] = library
+        if status:
+            query["status"] = status
 
         # Execute the query and return multiple documents
         return list(self.collection.find(query).limit(limit))
@@ -109,7 +114,7 @@ class SourceCodeRepository:
         return {
             "name": source_code_object.name,
             "source_code_type": source_code_object.source_code_type,
-            "source_code": source_code_object.get_source_code,
+            "source_code": source_code_object.source_code,
             "source_code_hyperparameters": source_code_object.source_code_hyperparameters,
             "optimalBOHyperparameters": source_code_object.optimalBOHyperParameters,
             "dataset_info": {
@@ -120,3 +125,4 @@ class SourceCodeRepository:
             "status": status,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
+    

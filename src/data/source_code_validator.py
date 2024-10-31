@@ -70,11 +70,10 @@ class SourceCodeValidator:
             if self.validate_source_code(code):
                 self.source_code = code
                 logging.info("Code validated and saved")
-                return True
+                return code
             else:
                 response = self.refine_code_with_llm(code, self.last_error)
                 code = self.mistral.extract_code_block(response)
-                logging.info(f"New code block from mistral: {code}")
         
         logging.warning("Max iteration reached, code could not be validated")
         return False
