@@ -1,12 +1,13 @@
 import anthropic
 import os
+import re
 
 class Claude:
 
     def __init__(self,
                  api_key: str = None):
+        
         self.api_key = api_key or os.getenv("CLAUDE_API_KEY")
-
     def call_claude(self,
                     propmt: str,
                     max_tokens: int = 4000,
@@ -26,3 +27,11 @@ class Claude:
         scratchpad_block = scratchpad_blocks[0]
         scratchpad_str = scratchpad_block.text 
         return scratchpad_str       
+    
+    def extract_tag(self, text: str, xml_tag: str):
+        structure = r"<{0}>([^<]+)</{0}>".format(xml_tag)
+        match = re.search(structure, text)
+        if match:
+            return match.group(1)
+        else:
+            raise ValueError(f"No tag <{xml_tag}> was found in the text")

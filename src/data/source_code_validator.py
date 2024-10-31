@@ -1,14 +1,13 @@
 import logging
-from src.data.db.source_code_crud import SourceCodeRepository, SourceCodeStatus
 from src.data.claude_prompts.data_validation_prompt import source_code_validation_prompt
-from claude.claude import Claude  # Ensure this points to where Claude class is defined
+from claude.claude import Claude 
 
 logging.basicConfig(level=logging.INFO)
 
 class SourceCodeValidator:
     
     def __init__(self, api_key):
-        self.llm_refine_func = Claude()
+        self.claude = Claude()
         self.source_code = None
         self.prompt = None
         self.last_error = None
@@ -52,9 +51,10 @@ class SourceCodeValidator:
             error_message=error_msg
         )
         
-        refined_code = self.llm_refine_func.call_claude(prompt)
+        refined_code = self.claude.call_claude(prompt)
         
         return refined_code.strip()
+    
     
     def iterative_refinement_and_validation(self, initial_code, max_iteration=5):
         """
@@ -68,7 +68,8 @@ class SourceCodeValidator:
                 logging.info("Code validated and saved")
                 return True
             else:
-                code = self.refine_code_with_llm(code, self.last_error)
+                scratchpad = self.refine_code_with_llm(code, self.last_error)
+                code = self.claude.extract_tag(scratchpad, "source_code")
         
         logging.warning("Max iteration reached, code could not be validated")
         return False
