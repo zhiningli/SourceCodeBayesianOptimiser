@@ -114,7 +114,7 @@ class SourceCodeRepository:
         return {
             "name": source_code_object.name,
             "source_code_type": source_code_object.source_code_type,
-            "source_code": source_code_object.source_code,
+            "source_code": source_code_object.get_source_code,
             "source_code_hyperparameters": source_code_object.source_code_hyperparameters,
             "optimalBOHyperparameters": source_code_object.optimalBOHyperParameters,
             "dataset_info": {
