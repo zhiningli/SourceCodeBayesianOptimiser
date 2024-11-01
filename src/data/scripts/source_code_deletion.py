@@ -10,7 +10,7 @@ sourceCodeRepository = SourceCodeRepository()
 # Step 1: Load source code with status of generated_from_template
 source_code_status = SourceCodeStatus.FAILED_VALIDATION.value
 
-source_codes_pending_validation = sourceCodeRepository.find_source_codes(status=source_code_status, limit = 20)
+source_codes_pending_validation = sourceCodeRepository.find_source_codes(status=source_code_status, limit = 300)
 
 source_code_validator = SourceCodeValidator()
 fail_to_update_source_code = []

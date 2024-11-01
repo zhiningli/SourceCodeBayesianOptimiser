@@ -30,30 +30,20 @@ def generate_random_hyperparameters():
 # Create source code instances for each dataset
 def create_source_codes(data_source, variations=4):
     source_codes = []
-    for library, datasets in data_source.items():
-        for dataset in datasets:
-            for _ in range(variations):
-                kernel, C, gamma, coef0 = generate_random_hyperparameters()
-                
-                # Use dataset_name or dataset_id depending on the library
-                if library == "sklearn":
-                    source_code = (SVMSourceCode.builder()
-                                   .buildDataSet(library=library, dataset_name=dataset)
-                                   .buildKernel(kernel)
-                                   .buildC(C)
-                                   .buildGamma(gamma)
-                                   .buildCoef0(coef0)
-                                   .build())
-                elif library == "openml":
-                    source_code = (SVMSourceCode.builder()
-                                   .buildDataSet(library=library, dataset_id=dataset)
-                                   .buildKernel(kernel)
-                                   .buildC(C)
-                                   .buildGamma(gamma)
-                                   .buildCoef0(coef0)
-                                   .build())
-                
-                source_codes.append(source_code)
+
+    for dataset in [1120, 6, 1489, 40685, 44, 40927, 1494, 181, 53, 187, 28, 1515, 40982, 4534, 1462, 469, 21, 354, 1480, 1124, 1063, 40474, 1471, 30, 469, 1478, 1464, 1485, 15, 1512, 617, 3, 60, 1460, 1480, 901, 35]:
+        for _ in range(variations):
+            kernel, C, gamma, coef0 = generate_random_hyperparameters()
+            
+            source_code = (SVMSourceCode.builder()
+                            .buildDataSet(library="openml", dataset_id=dataset)
+                            .buildKernel(kernel)
+                            .buildC(C)
+                            .buildGamma(gamma)
+                            .buildCoef0(coef0)
+                            .build())
+            
+            source_codes.append(source_code)
     return source_codes
 
 # Save batch to the database
