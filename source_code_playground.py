@@ -1,68 +1,36 @@
-import random
-import numpy as np
-import json
-import logging
-from enum import Enum
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report
 
-from src.data.data_models import SVMHyperParameterSpace
-from src.data.source_code_generator import SVMSourceCode
-from src.data.db.source_code_crud import SourceCodeRepository
+from sklearn import datasets
 
-logging.basicConfig(level=logging.INFO)
+def run_svm_classification():
+    # Step 1: Load the dataset
+    data = datasets.load_iris()  # Corrected dataset loading
+    X, y = data.data, data.target
+    target_names = data.target_names
 
-class SourceCodeStatus(Enum):
-    GENERATED_FROM_TEMPLATE = "generated_from_template"
-    VALIDATED_TO_RUN = "validated_to_run"
+    # Step 2: Split the dataset into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Load dataset sources from external JSON configuration
-def load_data_sources(filename="src/data/scripts/data_sources.json"):
-    with open(filename, "r") as file:
-        return json.load(file)
+    # Step 3: Scale the features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-# Generate random hyperparameters
-def generate_random_hyperparameters():
-    kernel = random.choice(SVMHyperParameterSpace["kernel"]["options"])
-    C = np.random.uniform(low=SVMHyperParameterSpace["C"]["range"][0], high=SVMHyperParameterSpace["C"]["range"][1])
-    gamma = random.choice(SVMHyperParameterSpace["gamma"]["options"])
-    coef0 = np.random.uniform(low=SVMHyperParameterSpace["coef0"]["range"][0], high=SVMHyperParameterSpace["coef0"]["range"][1])
-    return kernel, C, gamma, coef0
+    # Step 4: Initialize the SVM model with hyperparameters
+    model = SVC(kernel='poly', C=4.229101316230308, gamma='scale', coef0=0.47320558504355414, random_state=42)
 
-# Create source code instances for each dataset
-def create_source_codes(data_source, variations=4):
-    source_codes = []
+    # Step 5: Train the model
+    model.fit(X_train, y_train)
 
-    for dataset in [1120, 6, 1489, 40685, 44, 40927, 1494, 181, 53, 187, 28, 1515, 40982, 4534, 1462, 469, 21, 354, 1480, 1124, 1063, 40474, 1471, 30, 469, 1478, 1464, 1485, 15, 1512, 617, 3, 60, 1460, 1480, 901, 35]:
-        for _ in range(variations):
-            kernel, C, gamma, coef0 = generate_random_hyperparameters()
-            
-            source_code = (SVMSourceCode.builder()
-                            .buildDataSet(library="openml", dataset_id=dataset)
-                            .buildKernel(kernel)
-                            .buildC(C)
-                            .buildGamma(gamma)
-                            .buildCoef0(coef0)
-                            .build())
-            
-            source_codes.append(source_code)
-    return source_codes
+    # Step 6: Make predictions on the test set
+    y_pred = model.predict(X_test)
 
-# Save batch to the database
-def save_batch_to_db(source_codes):
-    source_code_repo = SourceCodeRepository()
-    try:
-        # Convert Enum to string
-        status = SourceCodeStatus.GENERATED_FROM_TEMPLATE.value
-        source_code_repo.save_source_codes_batch(source_codes, status)
-        logging.info("Batch saved successfully")
-    except Exception as e:
-        logging.error("Failed to save batch: %s", e)
+    # Step 7: Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred, target_names=target_names)
 
-
-# Main function
-def main():
-    data_source = load_data_sources()
-    source_codes = create_source_codes(data_source, variations=4)
-    save_batch_to_db(source_codes)
-
-if __name__ == "__main__":
-    main()
+    print("Model Accuracy:", accuracy)
+    print("\nClassification Report:\n", report)
