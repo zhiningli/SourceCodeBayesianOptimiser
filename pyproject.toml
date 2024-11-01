@@ -19,6 +19,7 @@ openml = "0.15"
 pymongo = "4.10.1"
 anthropic = "0.37.1"
 mistralai = "1.1.0"
+transformers = "4.46.1"
 
 [tool.pytest.ini_options]
 pythonpath = [""]
