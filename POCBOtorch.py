@@ -1,5 +1,4 @@
 import torch
-from sklearn.model_selection import cross_val_score
 from botorch.models import MixedSingleTaskGP
 from botorch.acquisition import LogExpectedImprovement
 from botorch.optim import optimize_acqf
