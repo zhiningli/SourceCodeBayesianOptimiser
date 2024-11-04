@@ -129,6 +129,8 @@ def run_svm_classification():
 
     print("Model Accuracy:", accuracy)
     print("\\nClassification Report:\\n", report)
+
+    return accuracy
     """
 
     
