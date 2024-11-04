@@ -70,12 +70,11 @@ import pandas as pd
         data_loading_code = dataImportSourceCode.get(self.library, "")
 
         # Initialize SVM model with hyperparameters
-        model_initialization = f"model = SVC(kernel='{self.source_code_hyperparameters['kernel']}', C={self.source_code_hyperparameters['C']}"
-        if self.source_code_hyperparameters["kernel"] in ["poly", "rbf", "sigmoid"]:
-            model_initialization += f", gamma='{self.source_code_hyperparameters['gamma']}'"
-        if self.source_code_hyperparameters["kernel"] in ["poly", "sigmoid"]:
-            model_initialization += f", coef0={self.source_code_hyperparameters['coef0']}"
-        model_initialization += ", random_state=42)"
+        # model_initialization = f"model = SVC(kernel = kernel, C = C"
+        # if self.source_code_hyperparameters["kernel"] in ["poly", "rbf", "sigmoid"]:
+        #     model_initialization += f", gamma = gamma"
+        # if self.source_code_hyperparameters["kernel"] in ["poly", "sigmoid"]:
+        #     model_initialization += f", coef0 = coef0"
 
     # Generate complete source code
         return f"""
@@ -86,7 +85,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, classification_report
 {data_loading_code["importText"]}
 
-def run_svm_classification():
+def run_svm_classification(kernel, C, coef0, gamma):
     # Step 1: Load the dataset
     {data_loading_code["loadDataText"]}
 
@@ -103,8 +102,6 @@ def run_svm_classification():
     # Encode categorical columns
     for col in X.select_dtypes(include='object').columns:
         X[col] = LabelEncoder().fit_transform(X[col])
-
-    
         
     # Step 3: Split the dataset into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
@@ -115,7 +112,7 @@ def run_svm_classification():
     X_test = scaler.transform(X_test)
 
     # Step 5: Initialize the SVM model with hyperparameters
-    {model_initialization}
+    model = SVC(kernel=kernel, C = C, gamma= gamma, coef0 = coef0)
 
     # Step 6: Train the model
     model.fit(X_train, y_train)

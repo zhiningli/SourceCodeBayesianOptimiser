@@ -15,13 +15,14 @@ class SourceCodeValidator:
     
     def set_source_code(self, source_code_object):
         self.source_code = source_code_object
-    
-    def validate_source_code(self, code_str):
+
+    def validate_source_code(self, code_str, kernel='rbf', C=6.0, coef0=1.0, gamma='scale'):
         """
         Validate the provided source code by executing it
 
         Parameters:
-        code_str
+        code_str: str - The source code to validate
+        kernel, C, coef0, gamma: Parameters to be passed to the run_svm_classification function
 
         Return:
         bool: True if the code runs successfully
@@ -29,7 +30,8 @@ class SourceCodeValidator:
         try:
             namespace = {}
             exec(code_str, namespace)
-            namespace["run_svm_classification"]()  # Updated to match the function name in code_str
+            # Pass arguments to the function in the namespace
+            namespace["run_svm_classification"](kernel=kernel, C=C, coef0=coef0, gamma=gamma)
             return True
         except Exception as e:
             error_message = traceback.format_exc()
