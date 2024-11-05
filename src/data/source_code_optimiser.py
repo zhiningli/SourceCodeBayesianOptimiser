@@ -28,8 +28,7 @@ class SVMSourceCodeOptimiser:
                 raise ValueError("The code string must define a callable 'run_svm_classification' function.")
             
             # Run Bayesian optimization
-            self._run_bayesian_optimisation(n_iter=n_iter, initial_points=initial_points, sample_per_batch=sample_per_batch)
-            return True
+            return self._run_bayesian_optimisation(n_iter=n_iter, initial_points=initial_points, sample_per_batch=sample_per_batch)
         except Exception as e:
             error_message = traceback.format_exc()
             logging.error("Execution failed with error: %s", error_message)
@@ -37,9 +36,6 @@ class SVMSourceCodeOptimiser:
             return False
         
     def _botorch_objective(self, x):
-        """
-        This method acts as the objective function for BoTorch, using the parameters to call `self.objective_func`.
-        """
         np_params = x.detach().numpy().flatten()
         kernel_idx = int(np.round(np_params[0]))
         gamma_idx = int(np.round(np_params[3]))
@@ -72,8 +68,10 @@ class SVMSourceCodeOptimiser:
         # Fit the GP model
         fit_gpytorch_mll_torch(mll)
 
-        # Define the acquisition function
         ei = LogExpectedImprovement(model=gp, best_f=train_y.max())
+
+        best_accuracy = -float("inf")
+        best_hyperparameters = None
 
         for i in range(n_iter):
             candidate, _ = optimize_acqf(
@@ -84,25 +82,38 @@ class SVMSourceCodeOptimiser:
                 raw_samples=20
             )
 
-            train_y = train_y.view(-1, 1)
-            new_y = self._botorch_objective(candidate).view(1, 1)
-            train_x = torch.cat([train_x, candidate.view(1, -1).to(torch.float64)])
-            train_y = torch.cat([train_y, new_y], dim=0)
+            train_y = train_y.view(-1, 1)   
+            # Evaluate the candidate and ensure new_y has shape [1, 1]
+            new_y = self._botorch_objective(candidate).view(1, 1)  # Ensure new_y shape [1, 1]
+            # Concatenate the new candidate and new_y to training data
+            train_x = torch.cat([train_x, candidate.view(1, -1)])  # Ensure train_x matches shape
+            train_y = torch.cat([train_y, new_y], dim=0)  # Concatenate along dimension 0
             train_y = train_y.view(-1)
-        
+
             gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
             ei = LogExpectedImprovement(model=gp, best_f=train_y.max())
-        
-        best_idx = train_y.argmax()
-        best_hyperparams = train_x[best_idx]
-        best_kernel = SVMHyperParameterSpace["kernel"]["options"][int(best_hyperparams[0].item())]
-        best_C = best_hyperparams[1].item()
-        best_coef0 = best_hyperparams[2].item()
-        best_gamma = SVMHyperParameterSpace["gamma"]["options"][int(best_hyperparams[3].item())]
 
-        print("Best Hyperparameters:")
-        print("Kernel:", best_kernel)
-        print("C:", best_C)
-        print("Coef0:", best_coef0)
-        print("Gamma:", best_gamma)
-        print("Accuracy:", self.objective_func(kernel=best_kernel, C=best_C, coef0=best_coef0, gamma=best_gamma))
+            current_accuracy = new_y.item()
+            if current_accuracy > best_accuracy:
+                best_accuracy = current_accuracy
+                best_hyperparameters = candidate
+
+        # Retrieve the best hyperparameters found
+        if best_hyperparameters is not None:
+            # Flatten best_hyperparameters if it's a 2D tensor
+            best_hyperparameters = best_hyperparameters.squeeze(0)
+
+            best_kernel = SVMHyperParameterSpace["kernel"]["options"][int(best_hyperparameters[0].item())]
+            best_C = best_hyperparameters[1].item()
+            best_coef0 = best_hyperparameters[2].item()
+            best_gamma = SVMHyperParameterSpace["gamma"]["options"][int(best_hyperparameters[3].item())]
+
+            print("Best Hyperparameters found:")
+            print("Best Kernel:", best_kernel)
+            print("Best C:", best_C)
+            print("Best Coef0:", best_coef0)
+            print("Best Gamma:", best_gamma)
+            print("Best Accuracy:", best_accuracy)
+
+
+        return best_accuracy, best_kernel, best_C, best_coef0, best_gamma

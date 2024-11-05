@@ -7,6 +7,8 @@ class SourceCodeStatus(Enum):
     GENERATED_FROM_TEMPLATE = "generated_from_template"
     VALIDATED_TO_RUN = "validated_to_run"
     FAILED_VALIDATION = "failed_validation"
+    ABLE_TO_RUN_BO = "able_to_run_bo"
+    UNABLE_TO_RUN_BO = "unable_to_run_bo"
 
 
 class SourceCodeRepository:
