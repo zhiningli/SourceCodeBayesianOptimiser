@@ -10,7 +10,7 @@ sourceCodeRepository = SourceCodeRepository()
 # Step 1: Load source code with status of generated_from_template
 source_code_status = SourceCodeStatus.ABLE_TO_RUN_BO.value
 
-source_codes_pending_optimisation = sourceCodeRepository.find_source_codes(source_code_type="SVM", limit=50)
+source_codes_pending_optimisation = sourceCodeRepository.find_source_codes(source_code_type="SVM", limit=100)
 
 source_code_optimiser = SVMSourceCodeOptimiser()
 fail_to_update_source_code = []
