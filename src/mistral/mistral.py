@@ -10,7 +10,6 @@ class MistralClient:
         self.client = Mistral(api_key=api_key)
         self.models = {
             "codestral": "codestral-mamba-latest",
-            
         }
 
     def call_codestral(self,
