@@ -51,20 +51,16 @@ Please return the information as a dictionary within triple backticks for Python
 """
 
 extract_dataset_from_source_code_prompt = """
-Your task is to analyze the provided source code and generate a new code string that extracts and returns the training and test datasets.
+Your task is to analyze the provided source code and create a new function that extracts and returns the training and test datasets.
 
 <code>
 {source_code}
 </code>
 
-Requirements for the new code string:
-1. **Data Importing and Preprocessing**: Include all steps related to data loading, importing, and preprocessing as present in the original code. Ensure that any data transformations, scaling, encoding, or cleaning procedures are preserved.
-2. **Return Statement**: Ensure that the code returns the training and test datasets as `pandas` DataFrames (`X_train`, `y_train`, `X_test`, `y_test`).
-
-Format the response within triple backticks for Python:
-
-```python
-# Include the data importing, loading, and preprocessing steps from the original code
-# Ensure the final lines return the datasets as DataFrames
-return (X_train, y_train), (X_test, y_test)
+Requirements for the new function:
+1. **Function Name**: The function should be named `extract_datasets`.
+2. **Data Importing and Preprocessing**: Include all steps related to data loading, importing, and preprocessing from the original code. Ensure that any data transformations, scaling, encoding, or cleaning procedures are preserved.
+3. **Return Statement**: Ensure that the function returns the training and test datasets as `pandas` DataFrames in the format:
+   ```python
+   return X_train, y_train, X_test, y_test
 """

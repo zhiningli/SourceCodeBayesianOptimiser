@@ -51,8 +51,11 @@ class CodeStrAnalyser:
             )
 
             # Call the LLM through MistralClient and get the response
-            source_code_information = self.mistral.call_codestral(prompt=prompt)
+            source_code_information_response = self.mistral.call_codestral(prompt=prompt)
 
+            source_code_information = self.mistral.extract_code_block(source_code_information_response)
+
+            self.datasets = None
             self.dataset_statistics["dataset_name"] = source_code_information["dataset_name"]
             self.dataset_statistics["dataset_library"] = source_code_information["dataset_library"]
 
@@ -83,9 +86,19 @@ class CodeStrAnalyser:
         try:
             prompt = extract_dataset_from_source_code_prompt.format(source_code=code_str)
 
-            dataset = self.mistral.call_codestral(prompt=prompt)
+            response = self.mistral.call_codestral(prompt=prompt)
 
-            return dataset
+            dataset_extraction_code = self.mistral.extract_code_block(response)
+
+            try:
+                namespace = {}
+                exec(dataset_extraction_code, namespace)
+                self.datasets = namespace["extract_datasets()"]()
+                return True
+            except Exception as e:
+                print("Error executing code from mistral", e)
+                return False
+
     
         except AttributeError as e:
             print(f"Error: Attribute issue - {e}")
@@ -99,10 +112,10 @@ class CodeStrAnalyser:
             print(f"An unexpected error occured: {e}")
             return {"error": "An unexpected error occured during processing"}
         
-    def perform_statistical_analysis(self, dataset):
+    def perform_statistical_analysis(self):
         
-        X , y = 
-        self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(dataset)
+        X_train, y_train, X_test, y_test = self.datasets
+        self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(X_train, y_train)
 
     def _calculate_aggregate_linearity_score(X, y, threshold=0.5):
         correlation_matrix = X.corrwith(y, method='pearson')
