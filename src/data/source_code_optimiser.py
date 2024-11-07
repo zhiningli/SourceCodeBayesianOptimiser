@@ -95,6 +95,7 @@ class SVMSourceCodeOptimiser:
 
             current_accuracy = new_y.item()
             if current_accuracy > best_accuracy:
+                print("a better hyperparameter is found!")
                 best_accuracy = current_accuracy
                 best_hyperparameters = candidate
 

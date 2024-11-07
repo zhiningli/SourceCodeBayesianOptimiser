@@ -8,6 +8,10 @@ class MistralClient:
                  api_key: str = "YT6c7Dvr5UTLNpNskkSG66bgUriDlfcZ"):
         self.model = "codestral-mamba-latest"
         self.client = Mistral(api_key=api_key)
+        self.models = {
+            "codestral": "codestral-mamba-latest",
+            
+        }
 
     def call_codestral(self,
                     prompt: str,
