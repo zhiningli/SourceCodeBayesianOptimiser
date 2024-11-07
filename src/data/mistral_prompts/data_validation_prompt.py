@@ -37,15 +37,34 @@ Please help me extract the following information:
 2. "What model is being used in this code?"
 3. "What are the hyperparameters for this model?"
 4. "What evaluation metrics are present?"
-5. "What are the ultimate training dataset (X_train, y_train) and test dataset(X_test, y_test) used for fitting and evaluating the model?
 
 Please return the information as a dictionary within triple backticks for Python, formatted as follows:
 
 ```python
 {
-    "dataset": "<dataset information>",
-    "model": "<model information>",
-    "hyperparameters": "<hyperparameters>",
+    "dataset_name": "<dataset name>",
+    "dataset_library": "<dataset library>"
+    "model_type": "<model name>",
+    "hyperparameters": "<python set: hyperparameters>",
     "evaluation_metrics": "<evaluation metrics>"
 }
+"""
+
+extract_dataset_from_source_code_prompt = """
+Your task is to analyze the provided source code and generate a new code string that extracts and returns the training and test datasets.
+
+<code>
+{source_code}
+</code>
+
+Requirements for the new code string:
+1. **Data Importing and Preprocessing**: Include all steps related to data loading, importing, and preprocessing as present in the original code. Ensure that any data transformations, scaling, encoding, or cleaning procedures are preserved.
+2. **Return Statement**: Ensure that the code returns the training and test datasets as `pandas` DataFrames (`X_train`, `y_train`, `X_test`, `y_test`).
+
+Format the response within triple backticks for Python:
+
+```python
+# Include the data importing, loading, and preprocessing steps from the original code
+# Ensure the final lines return the datasets as DataFrames
+return (X_train, y_train), (X_test, y_test)
 """
