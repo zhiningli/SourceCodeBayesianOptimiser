@@ -1,8 +1,8 @@
-# Import necessary modules
-from src.mistral.mistral import MistralClient  # Custom client for interacting with the LLM
-from src.data.mistral_prompts.data_validation_prompt import extract_information_from_source_code_prompt, extract_dataset_from_source_code_prompt  # Custom prompt for extracting info
+from src.mistral.mistral import MistralClient 
+from src.data.mistral_prompts.data_validation_prompt import extract_information_from_source_code_prompt, extract_dataset_from_source_code_prompt 
 import numpy as np
 import pandas as pd
+import json
 
 class CodeStrAnalyser:
     """
@@ -31,7 +31,9 @@ class CodeStrAnalyser:
             "model_hyperparameters": {}
         }
 
-        self.evaluation_metrics = {}
+        self.evaluation_metrics = None
+
+        self.datasets = None
 
     def extract_information_from_code_string(self, code_str):
         """
@@ -42,100 +44,120 @@ class CodeStrAnalyser:
 
         Returns:
         dict: A dictionary containing extracted information about the dataset, model, 
-              hyperparameters, and evaluation metrics.
+            hyperparameters, and evaluation metrics.
         """
-        try:
-            # Format the prompt with the given source code
-            prompt = extract_information_from_source_code_prompt.format(
-                source_code=code_str
-            )
 
+        try:
+            prompt = extract_information_from_source_code_prompt.format(
+                source_code = code_str
+                )
             # Call the LLM through MistralClient and get the response
             source_code_information_response = self.mistral.call_codestral(prompt=prompt)
 
+            # Extract code block from response
             source_code_information = self.mistral.extract_code_block(source_code_information_response)
-
-            self.datasets = None
-            self.dataset_statistics["dataset_name"] = source_code_information["dataset_name"]
-            self.dataset_statistics["dataset_library"] = source_code_information["dataset_library"]
-            self.dataset_statistics["feature_scaling"] = source_code_information["dataset_scaling"] 
-
-            self.model_statistics["model_type"] = source_code_information["model_type"]
-            self.model_statistics["model_hyperparameters"] = source_code_information["hyperparameters"]
             
-            self.evaluation_metrics.add(source_code_information["evaluation_metrics"])
+            # Ensure source_code_information is parsed correctly (assuming it's JSON-like)
+            if isinstance(source_code_information, str):
+                source_code_information = json.loads(source_code_information)
 
-            # Return the extracted information in dictionary format
+            # Safeguard key access and update internal state only if keys are present
+            self.datasets = None
+            self.dataset_statistics["dataset_name"] = source_code_information.get("dataset_name", "Unknown")
+            self.dataset_statistics["dataset_library"] = source_code_information.get("dataset_library", "Unknown")
+            self.dataset_statistics["feature_scaling"] = source_code_information.get("dataset_scaling", False)
+
+            self.model_statistics["model_type"] = source_code_information.get("model_type", "Unknown")
+            self.model_statistics["model_hyperparameters"] = source_code_information.get("hyperparameters", {})
+
+            self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
             return source_code_information
 
-        except AttributeError as e:
-            # Handle potential attribute errors, such as an improperly initialized MistralClient
-            print(f"Error: Attribute issue - {e}")
-            return {"error": "Attribute issue during LLM interaction."}
-
-        except TypeError as e:
-            # Handle issues with the input type (e.g., non-string input for code_str)
-            print(f"Error: Type issue - {e}")
-            return {"error": "Type issue in input or method call."}
+        except (AttributeError, KeyError, ValueError) as e:
+            print(f"Error: {e}")
+            return {"error": str(e)}
 
         except Exception as e:
-            # Catch any other general exceptions and log them
             print(f"An unexpected error occurred: {e}")
             return {"error": "An unexpected error occurred during processing."}
 
     def extract_dataset_from_code_string(self, code_str):
         try:
             prompt = extract_dataset_from_source_code_prompt.format(source_code=code_str)
-
             response = self.mistral.call_codestral(prompt=prompt)
-
             dataset_extraction_code = self.mistral.extract_code_block(response)
-
+            
             try:
                 namespace = {}
                 exec(dataset_extraction_code, namespace)
-                self.datasets = namespace["extract_datasets()"]()
+                self.datasets = namespace["extract_datasets"]()
+
+                X_train = pd.DataFrame(self.datasets[0])
+                X_test = pd.DataFrame(self.datasets[2])
+                
+                y_train = self._convert_to_series(self.datasets[1])
+                y_test = self._convert_to_series(self.datasets[3])
+                
+                self.datasets = (X_train, y_train, X_test, y_test)
                 return True
             except Exception as e:
-                print("Error executing code from mistral", e)
+                print("Error executing code from mistral:", e)
                 return False
 
-    
         except AttributeError as e:
             print(f"Error: Attribute issue - {e}")
-            return {"error": "Atrribute issue during mistral interaction"}
+            return {"error": "Attribute issue during mistral interaction"}
 
         except TypeError as e:
             print(f"Error: Type issue - {e}")
             return {"error": "Type issue in input or method call."}
-    
+            
         except Exception as e:
-            print(f"An unexpected error occured: {e}")
-            return {"error": "An unexpected error occured during processing"}
+            print(f"An unexpected error occurred: {e}")
+            return {"error": "An unexpected error occurred during processing"}
+
+    def _convert_to_series(self, data):
+        """
+        Converts the input data to a 1-dimensional pandas Series.
+        Handles cases where the input is a DataFrame with shape (n, 1) or a numpy array.
+        """
+        if isinstance(data, pd.DataFrame) and data.shape[1] == 1:
+            return pd.Series(data.squeeze())
+        elif isinstance(data, np.ndarray) and data.ndim == 2 and data.shape[1] == 1:
+            return pd.Series(data.squeeze())
+        else:
+            return pd.Series(data)
         
     def perform_statistical_analysis(self):
         if self.datasets:
             X_train, y_train, X_test, y_test = self.datasets
-            
-            # Calculate linearity score
+
             self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(X_train, y_train)
             
-            # Extract the number of features and samples using the shape attribute
-            self.dataset_statistics["number_of_features"] = X_train.shape[1]  # Number of columns (features)
-            self.dataset_statistics["number_of_samples"] = X_train.shape[0]   # Number of rows (samples)
+            self.dataset_statistics["number_of_features"] = X_train.shape[1] 
+            self.dataset_statistics["number_of_samples"] = X_train.shape[0] 
             
-            # Calculate the feature-to-sample ratio
             self.dataset_statistics["feature_to_sample_ratio"] = (
                 self.dataset_statistics["number_of_features"] / self.dataset_statistics["number_of_samples"]
             )
+        else:
+            raise ValueError("dataset not loaded to the code string analyser")
 
 
-    def _calculate_aggregate_linearity_score(X, y, threshold=0.5):
+    def _calculate_aggregate_linearity_score(self, X, y, threshold=0.5):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("X should be a pandas DataFrame.")
+        if not isinstance(y, (pd.Series, np.ndarray)):
+            raise TypeError("y should be a pandas Series or a 1-dimensional numpy array.")
+        
+
+        
         correlation_matrix = X.corrwith(y, method='pearson')
-
+        
         linear_features_count = (correlation_matrix.abs() > threshold).sum()
-
+        
         total_features = len(correlation_matrix)
         linearity_score = linear_features_count / total_features
-        return linearity_score
         
+        return linearity_score
+
