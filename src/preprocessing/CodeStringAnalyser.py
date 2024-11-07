@@ -58,6 +58,7 @@ class CodeStrAnalyser:
             self.datasets = None
             self.dataset_statistics["dataset_name"] = source_code_information["dataset_name"]
             self.dataset_statistics["dataset_library"] = source_code_information["dataset_library"]
+            self.dataset_statistics["feature_scaling"] = source_code_information["dataset_scaling"] 
 
             self.model_statistics["model_type"] = source_code_information["model_type"]
             self.model_statistics["model_hyperparameters"] = source_code_information["hyperparameters"]
@@ -113,9 +114,21 @@ class CodeStrAnalyser:
             return {"error": "An unexpected error occured during processing"}
         
     def perform_statistical_analysis(self):
-        
-        X_train, y_train, X_test, y_test = self.datasets
-        self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(X_train, y_train)
+        if self.datasets:
+            X_train, y_train, X_test, y_test = self.datasets
+            
+            # Calculate linearity score
+            self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(X_train, y_train)
+            
+            # Extract the number of features and samples using the shape attribute
+            self.dataset_statistics["number_of_features"] = X_train.shape[1]  # Number of columns (features)
+            self.dataset_statistics["number_of_samples"] = X_train.shape[0]   # Number of rows (samples)
+            
+            # Calculate the feature-to-sample ratio
+            self.dataset_statistics["feature_to_sample_ratio"] = (
+                self.dataset_statistics["number_of_features"] / self.dataset_statistics["number_of_samples"]
+            )
+
 
     def _calculate_aggregate_linearity_score(X, y, threshold=0.5):
         correlation_matrix = X.corrwith(y, method='pearson')

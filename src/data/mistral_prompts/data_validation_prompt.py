@@ -37,6 +37,7 @@ Please help me extract the following information:
 2. "What model is being used in this code?"
 3. "What are the hyperparameters for this model?"
 4. "What evaluation metrics are present?"
+5. "Does the dataset go through any scaling?"
 
 Please return the information as a dictionary within triple backticks for Python, formatted as follows:
 
@@ -47,6 +48,7 @@ Please return the information as a dictionary within triple backticks for Python
     "model_type": "<model name>",
     "hyperparameters": "<python set: hyperparameters>",
     "evaluation_metrics": "<evaluation metrics>"
+    "dataset_scaling": "<scaling techniques>"
 }
 """
 
