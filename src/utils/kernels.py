@@ -37,23 +37,18 @@ class TransformedOverlapKernel(Kernel):
         return self.raw_lengthscale_constraint.transform(self.raw_lengthscale)
 
     def forward(self, x1, x2, diag=False, last_dim_is_batch=False, **params):
-        # Check if diagonal computation is requested
-        if diag:
-            matches = (x1 == x2).float()
-            weighted_sum = torch.sum(self.lengthscale * matches, dim=-1)
-            return torch.exp(weighted_sum)
+        if x1.dim() == 2:
+            x1_expanded = x1.unsqueeze(1)
+        else:
+            x1_expanded = x1
         
-        # Expand x1 and x2 to align for broadcasting
-        # Corrected shape handling
-        x1_expanded = x1.unsqueeze(1)  # Shape: (n1, 1, d)
-        x2_expanded = x2.unsqueeze(0)  # Shape: (1, n2, d)
-
-        # Compute element-wise matches and apply lengthscale weighting
-        matches = (x1_expanded == x2_expanded).float()  # Shape: (n1, n2, d)
-        weighted_sum = torch.sum(self.lengthscale * matches, dim=-1)  # Shape: (n1, n2)
-
-        # Check output shape
-        print("Corrected shape of weighted_sum:", weighted_sum.shape)
+        if x2.dim() == 2:
+            x2_expanded = x2.unsqueeze(-1)
+        else:
+            x2_expanded = x2
+        
+        matches = (x1_expanded == x2_expanded).float()
+        weighted_sum = torch.sum(self.lengthscale * matches, dim=-1)
 
         return torch.exp(weighted_sum)
 
