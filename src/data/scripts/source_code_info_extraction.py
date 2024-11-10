@@ -10,7 +10,7 @@ sourceCodeRepository = SourceCodeRepository()
 
 source_code_status = SourceCodeStatus.ABLE_TO_RUN_BO.value
 
-source_codes_pending_optimisation = sourceCodeRepository.find_source_codes(status=source_code_status, limit=100)
+source_codes_pending_optimisation = sourceCodeRepository.find_source_codes(status=source_code_status, limit=1)
 
 
 fail_to_evaluate_source_code = []
@@ -31,6 +31,7 @@ for source_code_object in source_codes_pending_optimisation:
         source_code_object["dataset_statistics"] = code_analyser.dataset_statistics
         source_code_object["model_statistics"] = code_analyser.model_statistics
         source_code_object["evaluation_metrics"] = code_analyser.evaluation_metrics
+        logging.info(source_code_object)
         source_code_object['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         source_code_object['status'] = SourceCodeStatus.EVALUATED_BY_SCRIPTS.value
 

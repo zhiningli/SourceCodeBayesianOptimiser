@@ -9,7 +9,8 @@ class SourceCodeStatus(Enum):
     FAILED_VALIDATION = "failed_validation"
     ABLE_TO_RUN_BO = "able_to_run_bo"
     UNABLE_TO_RUN_BO = "unable_to_run_bo"
-
+    EVALUATED_BY_SCRIPTS = "evaluated_by_script"
+    FAILED_AUTO_EVALUATION = "failed_auto_evaluation"
 
 class SourceCodeRepository:
     def __init__(self, db_url="mongodb://localhost:27017/", db_name="source_code_database", collection_name="source_code_collection"):

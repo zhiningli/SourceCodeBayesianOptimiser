@@ -93,7 +93,7 @@ class CodeStrAnalyser:
 
             self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
 
-            return source_code_information
+            return True
 
         except (AttributeError, KeyError, ValueError) as e:
             print(f"Error: {e}")
@@ -145,7 +145,6 @@ class CodeStrAnalyser:
         prompt = extract_information_and_datasets_prompt.format(source_code=code_str)
         response = self.mistral.call_codestral(prompt=prompt)
         source_code_information = self.mistral.extract_code_block(response)
-        print(source_code_information)
         if isinstance(source_code_information, str):
 
             source_code_information = json.loads(source_code_information)
