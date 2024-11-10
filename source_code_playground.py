@@ -19,12 +19,15 @@ for source_code_object in source_codes_pending_optimisation:
     code_analyser = CodeStrAnalyser()
     source_code_id = source_code_object["_id"]
     source_code_block = source_code_object['source_code'] 
+    print(source_code_block)
     if code_analyser.extract_information_from_code_string(code_str=source_code_block):
         time.sleep(5.0)
     else:
         fail_to_evaluate_source_code.append(source_code_object)
 
     if code_analyser.extract_dataset_from_code_string(code_str=source_code_block):
+        
+
         code_analyser.perform_statistical_analysis()
 
   
