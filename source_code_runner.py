@@ -31,7 +31,7 @@ def run_svm_classification(kernel, C, coef0, gamma):
     # Encode categorical columns
     for col in X.select_dtypes(include='object').columns:
         X[col] = LabelEncoder().fit_transform(X[col])
-        
+ 
     categorical_cols = X.select_dtypes(include='object').columns
     preprocessor = ColumnTransformer(
         transformers=[
@@ -71,5 +71,4 @@ def run_svm_classification(kernel, C, coef0, gamma):
     return accuracy
 
 run_svm_classification(kernel="sigmoid", C=0.5, gamma="auto", coef0=1)
-
 
