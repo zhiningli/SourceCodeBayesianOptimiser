@@ -25,6 +25,7 @@ class SVMSourceCode(SourceCode):
         self.library = None
         self.name = None
         self.source_code_type = "SVM"
+        self.dataset_url = None
 
         self.SVMHyperparameters_searchSpace = SVMHyperParameterSpace
         self.BOHyperparameters_searchSpace = self._generateBOHyperparameterSearchSpace()
@@ -83,7 +84,7 @@ def load_dataset_from_url(data_url, column_names=None, target_column=None):
     return X, y
 """,
     "loadDataText": 
-    """
+    f"""
     X, y = load_dataset_from_url({self.dataset_url}):
 """
 
@@ -206,11 +207,12 @@ class SVMSourceCodeBuilder:
         self._svm_source_code.set_SVMhyperparameters(coef0=coef0)
         return self
 
-    def buildDataSet(self, library: str, dataset_id: int = None, dataset_name = None):
+    def buildDataSet(self, library: str, dataset_url = None, dataset_id: int = None, dataset_name = None):
         """Set the library and dataset ID if applicable."""
         self._svm_source_code.library = library
         self._svm_source_code.dataset_id = dataset_id
         self._svm_source_code.dataset_name = dataset_name
+        self._svm_source_code.dataset_url = dataset_url
 
         self._svm_source_code.name = self._svm_source_code.generate_name()
         return self

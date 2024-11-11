@@ -29,50 +29,26 @@ def generate_random_hyperparameters():
 
 # Create source code instances for each dataset
 def create_source_codes(data_source, variations=4):
-    source_codes = []
-    for library, datasets in data_source.items():
-        for dataset in datasets:
-            for _ in range(variations):
-                kernel, C, gamma, coef0 = generate_random_hyperparameters()
-                
-                # Use dataset_name or dataset_id depending on the library
-                if library == "sklearn":
-                    source_code = (SVMSourceCode.builder()
-                                   .buildDataSet(library=library, dataset_name=dataset)
-                                   .buildKernel(kernel)
-                                   .buildC(C)
-                                   .buildGamma(gamma)
-                                   .buildCoef0(coef0)
-                                   .build())
-                elif library == "openml":
-                    source_code = (SVMSourceCode.builder()
-                                   .buildDataSet(library=library, dataset_id=dataset)
-                                   .buildKernel(kernel)
-                                   .buildC(C)
-                                   .buildGamma(gamma)
-                                   .buildCoef0(coef0)
-                                   .build())
-                
-                source_codes.append(source_code)
-    return source_codes
 
-# Save batch to the database
-def save_batch_to_db(source_codes):
-    source_code_repo = SourceCodeRepository()
-    try:
-        # Convert Enum to string
-        status = SourceCodeStatus.GENERATED_FROM_TEMPLATE.value
-        source_code_repo.save_source_codes_batch(source_codes, status)
-        logging.info("Batch saved successfully")
-    except Exception as e:
-        logging.error("Failed to save batch: %s", e)
+    source_code = (SVMSourceCode.builder()
+                    .buildDataSet(library="UCI", dataset_name="https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data")
+                    .buildKernel("rbf")
+                    .buildC(0.5)
+                    .buildGamma("auto")
+                    .buildCoef0(4)
+                    .build())
+
+            
+    return source_code
+
 
 
 # Main function
 def main():
     data_source = load_data_sources()
-    source_codes = create_source_codes(data_source, variations=4)
-    save_batch_to_db(source_codes)
+    source_code = create_source_codes(data_source, variations=4)   
+
+    print(source_code)
 
 if __name__ == "__main__":
     main()
