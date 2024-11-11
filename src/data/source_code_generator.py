@@ -63,6 +63,30 @@ import pandas as pd
     y = pd.Series(y, name='target')
     target_names = dataset.retrieve_class_labels() if dataset.retrieve_class_labels() else None
 """
+    },
+    "url":{
+        "importText": """
+def load_dataset_from_url(data_url, column_names=None, target_column=None):
+    # Load the dataset
+    data = pd.read_csv(data_url, header=None if column_names else 'infer')
+    if column_names:
+        data.columns = column_names
+    
+    # Separate features and target
+    if target_column:
+        X = data.drop(columns=[target_column])
+        y = data[target_column]
+    else:
+        X = data.iloc[:, :-1]  # Use all columns except the last as features
+        y = data.iloc[:, -1]   # Use the last column as the target
+
+    return X, y
+""",
+    "loadDataText": 
+    """
+    X, y = load_dataset_from_url({self.dataset_url}):
+"""
+
     }
 }
 
@@ -88,7 +112,6 @@ from sklearn.metrics import accuracy_score, classification_report
 def run_svm_classification(kernel, C, coef0, gamma):
     # Step 1: Load the dataset
     {data_loading_code["loadDataText"]}
-
     # Limit dataset to top 10,000 samples if larger
     max_samples = 10000
     if len(X) > max_samples:

@@ -57,51 +57,50 @@ class CodeStrAnalyser:
         dict: A dictionary containing extracted information about the dataset, model, 
               hyperparameters, and evaluation metrics.
         """
-        try:
-            prompt = extract_information_from_source_code_prompt.format(
-                source_code=code_str
-            )
-            # Call the LLM through MistralClient and get the response
-            source_code_information_response = self.mistral.call_codestral(prompt=prompt)
+        # try:
+        prompt = extract_information_from_source_code_prompt.format(
+            source_code=code_str
+        )
+        # Call the LLM through MistralClient and get the response
+        source_code_information_response = self.mistral.call_codestral(prompt=prompt)
 
-            # Extract code block from response
-            source_code_information = self.mistral.extract_code_block(source_code_information_response)
+        # Extract code block from response
+        source_code_information = self.mistral.extract_code_block(source_code_information_response)
+        print("response fro mistral: ", source_code_information)
+        # Ensure source_code_information is parsed correctly (assuming it's JSON-like)
+        if isinstance(source_code_information, str):
+            source_code_information = json.loads(source_code_information)
+        # Safeguard key access and update internal state only if keys are present
+        self.dataset_statistics.update({
+            "dataset_name": source_code_information.get("dataset_name", "Unknown"),
+            "dataset_library": source_code_information.get("dataset_library", "Unknown"),
+            "feature_scaling": source_code_information.get("dataset_scaling", False),
+            "test_size": source_code_information.get("test_size", None),
+            "number_of_classes": source_code_information.get("number_of_classes", None),
+            "cross_validation": source_code_information.get("cross_validation", None),
+            "feature_selection": source_code_information.get("feature_selection", None),
+            "imputation": source_code_information.get("imputation", None),
+            "encoding": source_code_information.get("encoding", None),
+        })
 
-            # Ensure source_code_information is parsed correctly (assuming it's JSON-like)
-            if isinstance(source_code_information, str):
-                source_code_information = json.loads(source_code_information)
+        self.model_statistics.update({
+            "model_type": source_code_information.get("model_type", "Unknown"),
+            "model_source": source_code_information.get("model_source", "Unknown"),
+            "objective": source_code_information.get("objective", "Unknown"),
+            "model_hyperparameters": source_code_information.get("hyperparameters", {}),
+        })
 
-            # Safeguard key access and update internal state only if keys are present
-            self.dataset_statistics.update({
-                "dataset_name": source_code_information.get("dataset_name", "Unknown"),
-                "dataset_library": source_code_information.get("dataset_library", "Unknown"),
-                "feature_scaling": source_code_information.get("dataset_scaling", False),
-                "test_size": source_code_information.get("test_size", None),
-                "number_of_classes": source_code_information.get("number_of_classes", None),
-                "cross_validation": source_code_information.get("cross_validation", None),
-                "feature_selection": source_code_information.get("feature_selection", None),
-                "imputation": source_code_information.get("imputation", None),
-                "encoding": source_code_information.get("encoding", None),
-            })
+        self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
 
-            self.model_statistics.update({
-                "model_type": source_code_information.get("model_type", "Unknown"),
-                "model_source": source_code_information.get("model_source", "Unknown"),
-                "objective": source_code_information.get("objective", "Unknown"),
-                "model_hyperparameters": source_code_information.get("hyperparameters", {}),
-            })
+        return True
 
-            self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
+        # except (AttributeError, KeyError, ValueError) as e:
+        #     print(f"Error: {e}")
+        #     return {"error": str(e)}
 
-            return True
-
-        except (AttributeError, KeyError, ValueError) as e:
-            print(f"Error: {e}")
-            return {"error": str(e)}
-
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return {"error": "An unexpected error occurred during processing."}
+        # except Exception as e:
+        #     print(f"An unexpected error occurred: {e}")
+        #     return {"error": "An unexpected error occurred during processing."}
 
     def extract_dataset_from_code_string(self, code_str):
         try:
@@ -181,7 +180,6 @@ class CodeStrAnalyser:
 
             y_train = self._convert_to_series(self.datasets[1])
             y_test = self._convert_to_series(self.datasets[3])
-
             self.datasets = (X_train, y_train, X_test, y_test)
             return True
         except Exception as e:
@@ -209,6 +207,7 @@ class CodeStrAnalyser:
 
             self.dataset_statistics["number_of_features"] = X_train.shape[1]
             self.dataset_statistics["number_of_samples"] = X_train.shape[0]
+            self.dataset_statistics["number_of_classes"] = y_train.nunique() 
 
             self.dataset_statistics["feature_to_sample_ratio"] = (
                 self.dataset_statistics["number_of_features"] / self.dataset_statistics["number_of_samples"]

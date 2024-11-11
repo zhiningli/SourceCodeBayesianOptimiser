@@ -81,6 +81,8 @@ Your task is to analyze the provided source code and create a new function that 
 {source_code}
 </code>
 
+`return X_train, y_train, X_test, y_test`
+Execution: Include a call to `extract_datasets()` at the end of the code so that the function is executed when the script runs.
 Requirements for the new function:
 1. **Library Imports**: Include all necessary library import statements at the top.
 2. **Function Name**: The function should be named `extract_datasets`.
@@ -105,27 +107,47 @@ Please help me extract the following information:
 4. "What evaluation metrics are present?"
 5. "Does the dataset go through any scaling?"
 
-Here is an example of how this should be done
+Here is an example of how this should be done. Pay attention to ensuring JSON compatibility by using \\ for escape characters and using double quotes "" for property names.
+
 ```python
 {{
     "dataset_name": "iris",
     "dataset_library": "sklearn",
     "model_type": "SVM",
-    "hyperparameters": "{{'kernel': 'poly', 'C': 4.229101316230308, 'gamma': 'scale', 'coef0': 0.47320558504355414, 'random_state': 42}}",
+    "model_source": "sklearn",
+    "objective": "classification",
+    "test_size": 0.3,
+    "cross_validation": "train test split",
+    "feature_selection": "principle feature analysis",
+    "hyperparameters": {{
+        "kernel": "poly",
+        "C": 4.229101316230308,
+        "gamma": "scale",
+        "coef0": 0.47320558504355414,
+        "random_state": 42
+    }},
+    "dataset_scaling": "StandardScaler",
     "evaluation_metrics": "accuracy",
-    "dataset_scaling": "StandardScaler"
+    "imputation": "mean imputation",
+    "encoding": "LabelEncoder"
 }}
-```
-
-Please return the information as a dictionary within triple backticks for Python, formatted as follows:
-
-```python
+Return your findings as a dictionary within triple backticks for Python, formatted as follows:
 {{
     "dataset_name": "<dataset name>",
     "dataset_library": "<dataset library>",
     "model_type": "<model name>",
-    "hyperparameters": "<python set: hyperparameters>",
+    "model_source": "<library if it is an import>",
+    "objective": "<classification or regression or else>",
+    "test_size": "<proportion used for testing>",
+    "cross_validation": "<if any>",
+    "feature_selection": "<if any>",
+    "hyperparameters": {{
+        "key1": "value1",
+        "key2": "value2"
+    }},
+    "dataset_scaling": "<scaling techniques>",
     "evaluation_metrics": "<evaluation metrics>",
-    "dataset_scaling": "<scaling techniques>"
+    "imputation": "<imputation methods>",
+    "encoding": "<Any encoder used>"
 }}
 """
