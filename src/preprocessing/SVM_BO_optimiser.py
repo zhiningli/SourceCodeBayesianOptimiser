@@ -1,8 +1,8 @@
-from gpytorch.kernels import ScaleKernel, HammingIMQKernel, RBFKernel
+from gpytorch.kernels import ScaleKernel, HammingIMQKernel, RBFKernel, ProductKernel
 from gpytorch.priors import NormalPrior
 from gpytorch.models import ExactGP
 from gpytorch.means import ConstantMean
-from gpytorch.distributions import MultitaskMultivariateNormal
+from gpytorch.distributions import MultivariateNormal
 
 from botorch.acquisition import LogExpectedImprovement
 from botorch.optim import optimize_acqf
@@ -10,10 +10,12 @@ from botorch.utils.transforms import standardize
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.optim.fit import fit_gpytorch_mll_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch.likelihoods import GaussianLikelihood
+from botorch.models.transforms.input import InputTransform
 
 from src.data.data_models import SVMHyperParameterSpace
-from src.training.bo_metrics import cumulative_regret
 
+from typing import Optional
 import numpy as np
 import torch
 import traceback
@@ -26,7 +28,13 @@ class SVM_BO_optimiser:
         self.params = None
         self.objective_func = None
     
-    def optimise(self, code_str, n_iter=20, initial_points=10, sample_per_batch=1):
+    def optimise(self, code_str, n_iter=20, initial_points=10, sample_per_batch=1,
+                                                    svm_kernel_outputscale_prior_mean = 1,
+                                                    svm_C_lengthscale_prior_mean = 1.5,
+                                                    svm_C_outputscale_prior_mean = 1.5,
+                                                    svm_gamma_outputscale_prior_mean = 1,
+                                                    svm_coef0_lengthscale_prior_mean = 1.5,
+                                                    svm_coef0_outputscale_prior_mean = 1):
         try:
             namespace = {}
             exec(code_str, namespace)
@@ -36,7 +44,13 @@ class SVM_BO_optimiser:
                 raise ValueError("The code string must define a callable 'run_svm_classification' function.")
             
             # Run Bayesian optimization
-            return self._run_bayesian_optimisation(n_iter=n_iter, initial_points=initial_points, sample_per_batch=sample_per_batch)
+            return self._run_bayesian_optimisation(n_iter=n_iter, initial_points=initial_points, sample_per_batch=sample_per_batch,
+                                                    svm_kernel_outputscale_prior_mean = svm_kernel_outputscale_prior_mean,
+                                                    svm_C_lengthscale_prior_mean = svm_C_lengthscale_prior_mean,
+                                                    svm_C_outputscale_prior_mean = svm_C_outputscale_prior_mean,
+                                                    svm_gamma_outputscale_prior_mean = svm_gamma_outputscale_prior_mean,
+                                                    svm_coef0_lengthscale_prior_mean = svm_coef0_lengthscale_prior_mean,
+                                                    svm_coef0_outputscale_prior_mean = svm_coef0_outputscale_prior_mean)
         except Exception as e:
             error_message = traceback.format_exc()
             logging.error("Execution failed with error: %s", error_message)
@@ -61,7 +75,12 @@ class SVM_BO_optimiser:
                                    n_iter, 
                                    initial_points, 
                                    sample_per_batch,
-                                   svm_kernel_outputscale_mean):
+                                   svm_kernel_outputscale_prior_mean,
+                                   svm_C_lengthscale_prior_mean,
+                                   svm_C_outputscale_prior_mean,
+                                   svm_gamma_outputscale_prior_mean,
+                                   svm_coef0_lengthscale_prior_mean,
+                                   svm_coef0_outputscale_prior_mean):
         # Define the bounds for kernel, C, coef0, and gamma search space
         bounds = torch.tensor([[0, 0.1, 0.0, 0], [len(SVMHyperParameterSpace["kernel"]["options"])-1, 10.0, 1.0, len(SVMHyperParameterSpace["gamma"]["options"])-1]], dtype=torch.float64)
 
@@ -75,17 +94,19 @@ class SVM_BO_optimiser:
 
         kernel = (
             SVM_BO_Kernel.builder()
-            .build_kernel_for_svm_kernel(outputscale_prior_mean=svm_kernel_outputscale_mean)
-            .build_kernel_for_svm_C(lengthscale_prior_mean=1.0, outputscale_prior_mean=1.5)
-            .build_kernel_for_svm_gamma(outputscale_prior_mean=1.2)
-            .build_kernel_for_svm_coef0(lengthscale_prior_mean=0.5, outputscale_prior_mean=1.0)
+            .build_kernel_for_svm_kernel(outputscale_prior_mean=svm_kernel_outputscale_prior_mean)
+            .build_kernel_for_svm_C(lengthscale_prior_mean=svm_C_lengthscale_prior_mean, outputscale_prior_mean=svm_C_outputscale_prior_mean)
+            .build_kernel_for_svm_gamma(outputscale_prior_mean=svm_gamma_outputscale_prior_mean)
+            .build_kernel_for_svm_coef0(lengthscale_prior_mean=svm_coef0_lengthscale_prior_mean, outputscale_prior_mean=svm_coef0_outputscale_prior_mean)
             .build()
         )
 
         # Initialise the GP model with double precision
-        mll = ExactMarginalLogLikelihood().to(torch.float64)
+        likelihood = GaussianLikelihood().to(torch.float64)
 
-        gp = SVM_GP_model(train_X=train_x, train_y=train_y, likelihood=mll, kernel=kernel).to(torch.float64)
+        gp = SVM_GP_model(train_X=train_x, train_y=train_y, likelihood=likelihood, kernel=kernel).to(torch.float64)
+
+        mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
 
         # Fit the GP model
         fit_gpytorch_mll_torch(mll)
@@ -134,18 +155,24 @@ class SVM_Expected_Improvement(LogExpectedImprovement):
         if not self.constraints(x):
             return super().forward(float("-inf"))
 
+
 class SVM_GP_model(ExactGP):
 
-    def __init__(self, train_X, train_y, likelihood, kernel):
+    def __init__(self, train_X, train_y, likelihood, kernel, input_transform: Optional[InputTransform] = None):
         super(SVM_GP_model, self).__init__(train_X, train_y, likelihood)
         self.mean_module = ConstantMean()
         self.covar_module = kernel
+        self.input_transfom = input_transform
 
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
-        return MultitaskMultivariateNormal(mean_x, covar_x)
+        return MultivariateNormal(mean_x, covar_x)
 
+    def transform_inputs(self, x: torch.Tensor) -> torch.Tensor:
+        if self.input_transfom is not None:
+            return self.input_transform(x)
+        return x
 
 class SVM_BO_Kernel:
     def __init__(self):
@@ -159,6 +186,13 @@ class SVM_BO_Kernel:
     def builder(cls):
         return SVM_BO_Kernel_builder()
 
+    def forward(self, x1, x2=None, **params):
+        if self.kernel is None:
+            raise ValueError("Kernel has not been built. Use the builder to construct the kernel before calling.")
+        return self.kernel(x1, x2, **params)
+
+    def __call__(self, x1, x2=None, **params):
+        return self.forward(x1, x2, **params)
 
 class SVM_BO_Kernel_builder:
     def __init__(self):
@@ -235,11 +269,11 @@ class SVM_BO_Kernel_builder:
         return self
 
     def build(self) -> SVM_BO_Kernel:
-        """Combine the individual kernels into one composite kernel and return the complete SVM_BO_Kernel object."""
-        self._SVM_BO_Kernel.kernel = (
-            self._SVM_BO_Kernel.kernel_for_svm_kernel *
-            self._SVM_BO_Kernel.kernel_for_svm_C *
-            self._SVM_BO_Kernel.kernel_for_svm_gamma *
+        """Combine the individual kernels using ProductKernel and return the complete SVM_BO_Kernel object."""
+        self._SVM_BO_Kernel.kernel = ProductKernel(
+            self._SVM_BO_Kernel.kernel_for_svm_kernel,
+            self._SVM_BO_Kernel.kernel_for_svm_C,
+            self._SVM_BO_Kernel.kernel_for_svm_gamma,
             self._SVM_BO_Kernel.kernel_for_svm_coef0
         )
         return self._SVM_BO_Kernel
