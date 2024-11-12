@@ -65,8 +65,10 @@ import pandas as pd
     target_names = dataset.retrieve_class_labels() if dataset.retrieve_class_labels() else None
 """
     },
-    "url":{
+    "UCI":{
         "importText": """
+import pandas as pd
+        
 def load_dataset_from_url(data_url, column_names=None, target_column=None):
     # Load the dataset
     data = pd.read_csv(data_url, header=None if column_names else 'infer')
@@ -85,7 +87,11 @@ def load_dataset_from_url(data_url, column_names=None, target_column=None):
 """,
     "loadDataText": 
     f"""
-    X, y = load_dataset_from_url({self.dataset_url}):
+    X, y = load_dataset_from_url(data_url="{self.dataset_url}")
+    label_encoder = LabelEncoder()
+    y = label_encoder.fit_transform(y)
+    target_names = label_encoder.classes_
+
 """
 
     }

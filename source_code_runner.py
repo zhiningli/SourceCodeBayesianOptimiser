@@ -4,20 +4,33 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, classification_report
 
-import openml
 import pandas as pd
+        
+def load_dataset_from_url(data_url, column_names=None, target_column=None):
+    # Load the dataset
+    data = pd.read_csv(data_url, header=None if column_names else 'infer')
+    if column_names:
+        data.columns = column_names
+    
+    # Separate features and target
+    if target_column:
+        X = data.drop(columns=[target_column])
+        y = data[target_column]
+    else:
+        X = data.iloc[:, :-1]  # Use all columns except the last as features
+        y = data.iloc[:, -1]   # Use the last column as the target
+
+    return X, y
 
 
 def run_svm_classification(kernel, C, coef0, gamma):
     # Step 1: Load the dataset
     
-    dataset = openml.datasets.get_dataset(dataset_id=1124)
-    X, y, _, _ = dataset.get_data(target=dataset.default_target_attribute, dataset_format="dataframe")
-    y = pd.Series(y, name='target')
-    target_names = dataset.retrieve_class_labels() if dataset.retrieve_class_labels() else None
-
-    label_encoder =LabelEncoder()
+    X, y = load_dataset_from_url(data_url="https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data")
+    label_encoder = LabelEncoder()
     y = label_encoder.fit_transform(y)
+    target_names = label_encoder.classes_
+
 
     # Limit dataset to top 10,000 samples if larger
     max_samples = 10000
@@ -58,5 +71,4 @@ def run_svm_classification(kernel, C, coef0, gamma):
     print("\nClassification Report:\n", report)
 
     return accuracy
-
 run_svm_classification(kernel="sigmoid", C=0.5, gamma="auto", coef0=1)

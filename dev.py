@@ -31,11 +31,11 @@ def generate_random_hyperparameters():
 def create_source_codes(data_source, variations=4):
 
     source_code = (SVMSourceCode.builder()
-                    .buildDataSet(library="UCI", dataset_name="https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data")
+                    .buildDataSet(library="UCI", dataset_url="https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data")
                     .buildKernel("rbf")
                     .buildC(0.5)
                     .buildGamma("auto")
-                    .buildCoef0(4)
+                    .buildCoef0(0.5)
                     .build())
 
             
@@ -48,7 +48,7 @@ def main():
     data_source = load_data_sources()
     source_code = create_source_codes(data_source, variations=4)   
 
-    print(source_code)
+    print(source_code.get_source_code)
 
 if __name__ == "__main__":
     main()
