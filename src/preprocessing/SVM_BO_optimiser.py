@@ -1,6 +1,38 @@
-import torch
 from gpytorch.kernels import ScaleKernel, HammingIMQKernel, RBFKernel
 from gpytorch.priors import NormalPrior
+from gpytorch.models import ExactGP
+from gpytorch.means import ConstantMean
+from gpytorch.distributions import MultitaskMultivariateNormal
+from botorch.acquisition import ExpectedImprovement
+import torch
+
+class SVM_Expected_Improvement:
+
+    def __init__(self, model, best_f, constraints):
+        super().__init__(model, best_f)
+        self.constraints = constraints
+    
+    def _constraints(self, x):
+        return torch.all((x[:, 0] >= 0) & x[:, 0] <= 4)
+
+    def forward(self, x):
+        x[:, 0] = torch.round(x[:, 0])
+
+        if not self.constraints(x):
+            return super().forward(float("-inf"))
+
+class SVM_GP_model(ExactGP):
+
+    def __init__(self, train_X, train_y, likelihood, kernel):
+        super(SVM_GP_model, self).__init__(train_X, train_y, likelihood)
+        self.mean_module = ConstantMean()
+        self.covar_module = kernel
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultitaskMultivariateNormal(mean_x, covar_x)
+
 
 class SVM_BO_Kernel:
     def __init__(self):
