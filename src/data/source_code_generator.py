@@ -65,7 +65,7 @@ import pandas as pd
     target_names = dataset.retrieve_class_labels() if dataset.retrieve_class_labels() else None
 """
     },
-    "UCI":{
+    "uci":{
         "importText": """
 import pandas as pd
         
