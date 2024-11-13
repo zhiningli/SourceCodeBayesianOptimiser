@@ -126,8 +126,9 @@ class SVM_BO_optimiser:
         fit_gpytorch_mll_torch(mll)
 
         ei = LogExpectedImprovement(model=gp, best_f=train_y.max())
-
-        candidates = []
+        best_candidate = None
+        best_y = None
+        accuracies = []
         for i in range(n_iter):
             # Generate initial conditions for this iteration (e.g., Sobol sampling or custom initialization)
             initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
@@ -141,10 +142,13 @@ class SVM_BO_optimiser:
                 discrete_values=discrete_values
             )
             
-            # Append the candidate to the list
-            candidates.append(candidate)
             train_y = train_y.view(-1, 1)
             new_y = self._botorch_objective(candidate).view(1, 1)
+
+            accuracies.append(new_y)
+            if new_y >= best_y:
+                new_y = best_y
+                best_candidate = candidate
             train_x = torch.cat([train_x, candidate.view(1, -1)])
             train_y = torch.cat([train_y, new_y], dim=0)
             train_y = train_y.view(-1)
@@ -152,7 +156,7 @@ class SVM_BO_optimiser:
             gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
             ei = LogExpectedImprovement(model=gp, best_f=train_y.max())
 
-        return candidates
+        return accuracies, best_y, best_candidate
 
     def _optimize_acqf_with_discrete_search_space(
         self,
