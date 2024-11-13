@@ -16,6 +16,17 @@ source_code = source_code_pending_validation["source_code"]
 optimiser = SVM_BO_optimiser()
 
 
-result = optimiser.optimise(source_code)
+result = optimiser.optimise(
+    code_str = source_code,
+    n_iter=20, initial_points=10, sample_per_batch=1,
+    svm_kernel_lengthscale_prior_mean = 1,
+    svm_kernel_outputscale_prior_mean = 1,
+    svm_C_lengthscale_prior_mean = 1.5,
+    svm_C_outputscale_prior_mean = 1.5,
+    svm_gamma_lengthscale_prior_mean = 1,
+    svm_gamma_outputscale_prior_mean = 1,
+    svm_coef0_lengthscale_prior_mean = 1.5,
+    svm_coef0_outputscale_prior_mean = 1
+)
 
 print(result)
