@@ -11,6 +11,7 @@ class SourceCodeStatus(Enum):
     UNABLE_TO_RUN_BO = "unable_to_run_bo"
     EVALUATED_BY_SCRIPTS = "evaluated_by_script"
     FAILED_AUTO_EVALUATION = "failed_auto_evaluation"
+    BEST_BO_FOUND = "best_BO_found"
 
 class SourceCodeRepository:
     def __init__(self, db_url="mongodb://localhost:27017/", db_name="source_code_database", collection_name="source_code_collection"):
