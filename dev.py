@@ -13,7 +13,7 @@ sourceCodeRepository = SourceCodeRepository()
 # Step 1: Load source code with status of generated_from_template
 source_code_status = SourceCodeStatus.EVALUATED_BY_SCRIPTS.value
 
-source_code_pending_validation = sourceCodeRepository.find_source_codes(status=source_code_status, limit=15)
+source_code_pending_validation = sourceCodeRepository.find_source_codes(status=source_code_status, limit=50)
 optimiser = SVM_BO_optimiser()
 db = BO_evaluation_db()
 svm_kernel_lengthscale_prior_means = np.arange(0.5, 2.0, 0.5)  # Generates 4
@@ -35,7 +35,6 @@ for source_code_object in source_code_pending_validation:
             for gamma_o_mean in svm_gamma_outputscale_prior_means:
                             # for coef0_l_mean in svm_coef0_lengthscale_prior_means:
                 for coef0_o_mean in svm_coef0_outputscale_prior_means:
-
                     result_to_save = {
                         "source_code_id": source_code_object["_id"],
                         "BO_hyperparameters": {
@@ -49,6 +48,9 @@ for source_code_object in source_code_pending_validation:
                             "svm_coef0_outputscale_prior_mean": coef0_o_mean
                         }
                     }
+                    results = []
+                    global_best_accuracy = 0.0
+                    global_best_SVM_hyperparameters = None
 
                     result, best_accuracy, best_SVM_hyperparameters = optimiser.optimise(
                         code_str = source_code,
@@ -62,14 +64,18 @@ for source_code_object in source_code_pending_validation:
                         svm_coef0_lengthscale_prior_mean = result_to_save["BO_hyperparameters"]["svm_coef0_lengthscale_prior_mean"],
                         svm_coef0_outputscale_prior_mean = result_to_save["BO_hyperparameters"]["svm_coef0_outputscale_prior_mean"],
                     )
-                    cr = cumulative_regret(result, 1.0) / len(result)
+                    
+                    results += result
+                    if best_accuracy >= global_best_accuracy:
+                        global_best_accuracy = best_accuracy
+                        global_best_SVM_hyperparameters = best_SVM_hyperparameters
+                    
+                    cr = cumulative_regret(results, 1.0) / len(results)
                     result_to_save["normalised_cumulative_regret"] = cr
-                    result_to_save["simple_regrets"] = 1.0 - best_accuracy
-                    print("best SVM hyperparameters: ", best_SVM_hyperparameters)
-                    print("best_accurary: ", best_accuracy)
+                    result_to_save["simple_regrets"] = 1.0 - global_best_accuracy
+                    print("best SVM hyperparameters: ", global_best_SVM_hyperparameters)
+                    print("best_accurary: ", global_best_accuracy)
                     print("normalised_cumulative_regrets: ", cr)
-
-
                     db.save_BO_evaluation_results(result_to_save)
 
 
