@@ -16,6 +16,7 @@ from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from botorch.models import SingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.models.fully_bayesian import MaternKernel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils.transforms import standardize
@@ -42,7 +43,8 @@ class SVM_BO_optimiser:
                                                     svm_gamma_lengthscale_prior_mean = 1,
                                                     svm_gamma_outputscale_prior_mean = 1,
                                                     svm_coef0_lengthscale_prior_mean = 1.5,
-                                                    svm_coef0_outputscale_prior_mean = 1):
+                                                   svm_coef0_outputscale_prior_mean = 1
+                ):
         try:
             namespace = {}
             exec(code_str, namespace)
@@ -261,7 +263,7 @@ class SVM_GP_model(SingleTaskGP):
         )
 
         continuous_kernel_for_C = ScaleKernel(
-            RBFKernel(
+            MaternKernel(
                 ard_num_dims=1,
                 lengthscale_prior=LogNormalPrior(loc=svm_C_lengthscale_prior_mean, scale=sqrt(3.0)),
                 lengthscale_constraint=GreaterThan(1e-06)
