@@ -101,75 +101,62 @@ class MLP_GP_model(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        MLP_hidden1_nu_prior_mean: float,
-        MLP_hidden2_nu_prior_mean: float,
-        MLP_hidden3_nu_prior_mean: float,
+        MLP_hidden1_nu: float,
+        MLP_hidden2_nu: float,
+        MLP_hidden3_nu: float,
+        MLP_hidden4_nu: float,
+        MLP_lr_nu: float,
+        MLP_activation_nu: float,
+        MLP_weight_decay_nu: float,
         likelihood: Optional[Likelihood],
         train_Yvar: Optional[Tensor] = None,
         outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
 
-        cat_kernel_for_gamma = ScaleKernel(
-            CategoricalKernel(
-                ard_num_dims=1,
-                lengthscale_prior=LogNormalPrior(loc=svm_gamma_lengthscale_prior_mean, scale=sqrt(3.0)),
-                lengthscale_constraint=GreaterThan(1e-06)
-            ),
-            outputscale_prior=LogNormalPrior(loc=svm_gamma_outputscale_prior_mean, scale=sqrt(3.0)),
-            outputscale_constraint=GreaterThan(0.1)
-        )
-
-        cat_kernel_for_kernel = ScaleKernel(
-            CategoricalKernel(
-                ard_num_dims=1,
-                lengthscale_prior=LogNormalPrior(loc=svm_kernel_lengthscale_prior_mean, scale=sqrt(3.0)),
-                lengthscale_constraint=GreaterThan(1e-06)
-            ),
-            outputscale_prior=LogNormalPrior(loc=svm_kernel_outputscale_prior_mean, scale=sqrt(3.0)),
-            outputscale_constraint=GreaterThan(0.1)
-        )
-
-        continuous_kernel_for_C = ScaleKernel(
+        matern_kernel_for_hidden1 = ScaleKernel(
             MaternKernel(
-                ard_num_dims=1,
-                lengthscale_prior=LogNormalPrior(loc=svm_C_lengthscale_prior_mean, scale=sqrt(3.0)),
-                lengthscale_constraint=GreaterThan(1e-06)
-            ),
-            outputscale_prior=LogNormalPrior(loc=svm_C_outputscale_prior_mean, scale=sqrt(3.0)),
-            outputscale_constraint=GreaterThan(0.1)
+                nu = MLP_hidden1_nu,
+            )
         )
 
-        continuous_kernel_for_coef0 = ScaleKernel(
-            RBFKernel(
-                ard_num_dims=1,
-                lengthscale_prior=LogNormalPrior(loc=svm_coef0_lengthscale_prior_mean, scale=sqrt(3.0)),
-                lengthscale_constraint=GreaterThan(1e-06)
-            ),
-            outputscale_prior=LogNormalPrior(loc=svm_coef0_outputscale_prior_mean, scale=sqrt(3.0)),
-            outputscale_constraint=GreaterThan(0.1)
+        matern_kernel_for_hidden2 = ScaleKernel(
+            MaternKernel(
+                nu = MLP_hidden2_nu,
+            )
         )
 
-        covar_module = cat_kernel_for_kernel * continuous_kernel_for_C * continuous_kernel_for_coef0 * cat_kernel_for_gamma
-        print("Gamma Kernel Lengthscale Prior: LogNormalPrior with loc =", cat_kernel_for_gamma.base_kernel.lengthscale_prior.loc.item(),
-            "and scale =", cat_kernel_for_gamma.base_kernel.lengthscale_prior.scale.item())
-        print("Gamma Kernel Outputscale Prior: LogNormalPrior with loc =", cat_kernel_for_gamma.outputscale_prior.loc.item(),
-            "and scale =", cat_kernel_for_gamma.outputscale_prior.scale.item())
+        matern_kernel_for_hidden3 = ScaleKernel(
+            MaternKernel(
+                nu = MLP_hidden3_nu,
+            )
+        )
 
-        print("Kernel Type Kernel Lengthscale Prior: LogNormalPrior with loc =", cat_kernel_for_kernel.base_kernel.lengthscale_prior.loc.item(),
-            "and scale =", cat_kernel_for_kernel.base_kernel.lengthscale_prior.scale.item())
-        print("Kernel Type Kernel Outputscale Prior: LogNormalPrior with loc =", cat_kernel_for_kernel.outputscale_prior.loc.item(),
-            "and scale =", cat_kernel_for_kernel.outputscale_prior.scale.item())
+        matern_kernel_for_hidden4 = ScaleKernel(
+            MaternKernel(
+                nu = MLP_hidden4_nu,
+            )
+        )
 
-        print("C Kernel Lengthscale Prior: LogNormalPrior with loc =", continuous_kernel_for_C.base_kernel.lengthscale_prior.loc.item(),
-            "and scale =", continuous_kernel_for_C.base_kernel.lengthscale_prior.scale.item())
-        print("C Kernel Outputscale Prior: LogNormalPrior with loc =", continuous_kernel_for_C.outputscale_prior.loc.item(),
-            "and scale =", continuous_kernel_for_C.outputscale_prior.scale.item())
+        matern_kernel_for_lr = ScaleKernel(
+            MaternKernel(
+                nu = MLP_lr_nu,
+            )
+        )
 
-        print("Coef0 Kernel Lengthscale Prior: LogNormalPrior with loc =", continuous_kernel_for_coef0.base_kernel.lengthscale_prior.loc.item(),
-            "and scale =", continuous_kernel_for_coef0.base_kernel.lengthscale_prior.scale.item())
-        print("Coef0 Kernel Outputscale Prior: LogNormalPrior with loc =", continuous_kernel_for_coef0.outputscale_prior.loc.item(),
-            "and scale =", continuous_kernel_for_coef0.outputscale_prior.scale.item())
+        matern_kernel_for_activation = ScaleKernel(
+            MaternKernel(
+                nu = MLP_activation_nu,
+            )
+        )
+
+        matern_kernel_for_weight_decay = ScaleKernel(
+            MaternKernel(
+                nu = MLP_weight_decay_nu
+            )
+        )
+
+        covar_module = matern_kernel_for_hidden1 * matern_kernel_for_hidden2 * matern_kernel_for_hidden3 * matern_kernel_for_hidden4 * matern_kernel_for_lr * matern_kernel_for_activation * matern_kernel_for_weight_decay
 
         super().__init__(
             train_X=train_X,
