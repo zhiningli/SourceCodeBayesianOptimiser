@@ -15,8 +15,8 @@ from botorch.utils.transforms import standardize
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.types import _DefaultType, DEFAULT
 from typing import Any, Optional, Union, Dict, Tuple, List
-
-
+from botorch.optim.fit import fit_gpytorch_mll_torch
+from botorch.acquisition import UpperConfidenceBound, AcquisitionFunction
 from gpytorch.kernels import ScaleKernel, RBFKernel
 from gpytorch.priors import LogNormalPrior
 from gpytorch.constraints import GreaterThan
@@ -79,7 +79,18 @@ class MLP_BO_Optimiser:
         return torch.tensor(self.objective_func(**params), dtype=torch.float)
 
 
-    def _run_bayesian_optimisation(self, n_iter_initial_points):
+    def _run_bayesian_optimisation(self, 
+                                    n_iter,
+                                    initial_points,
+                                    MLP_hidden1_nu: float,
+                                    MLP_hidden2_nu: float,
+                                    MLP_hidden3_nu: float,
+                                    MLP_hidden4_nu: float,
+                                    MLP_lr_nu: float,
+                                    MLP_activation_nu: float,
+                                    MLP_weight_decay_nu: float,
+                                    sample_per_batch=1
+                                   ):
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
         """
@@ -89,12 +100,103 @@ class MLP_BO_Optimiser:
             [3, 3, 3, 3, 2, 2, 2]   
         ], dtype=torch.float())
 
-        train_x = torch.rand((n_iter_initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
+        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7]
+        discrete_values = {
+            0: [0, 1, 2],
+            1: [0, 1, 2],
+            2: [0, 1, 2],
+            3: [0, 1, 2],
+            4: [0, 1, 2],
+            5: [0, 1, 2],
+            6: [0, 1, 2],
+        }
+
+        train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
         train_y = torch.tensor([self._botorch_objective(x).items for x in train_x])
         train_y = standardize(train_y)
 
         likelihood = GaussianLikelihood().to(torch.float64)
 
+        gp = (MLP_GP_model(MLP_hidden1_nu = MLP_hidden1_nu, 
+                           MLP_hidden2_nu = MLP_hidden2_nu,
+                           MLP_hidden3_nu = MLP_hidden3_nu, 
+                           MLP_hidden4_nu = MLP_hidden4_nu,
+                           MLP_lr_nu = MLP_lr_nu,
+                           MLP_activation_nu = MLP_activation_nu,
+                           MLP_weight_decay_nu = MLP_weight_decay_nu,
+                           train_X=train_x, train_Y=train_y, likelihood=likelihood
+                          ).to(torch.float64))
+        
+
+        mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
+        fit_gpytorch_mll_torch(mll)
+
+        ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
+        best_candidate = None
+        best_y = float('-inf')
+        accuracies = []
+
+        for i in range(n_iter):
+            initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
+            
+            candidate, acq_value = self._optimize_acqf_with_discrete_search_space(
+                initial_conditions=initial_conditions,
+                acquisition_function=ei,
+                bounds=bounds,
+                discrete_dims=discrete_dims,
+                discrete_values=discrete_values
+            )
+            
+            train_y = train_y.view(-1, 1)
+            new_y = self._botorch_objective(candidate).view(1, 1)
+            new_y_value = new_y.item()
+            accuracies.append(new_y_value)
+            if new_y_value >= best_y:
+                best_y = new_y_value 
+                best_candidate = candidate 
+            train_x = torch.cat([train_x, candidate.view(1, -1)])
+            train_y = torch.cat([train_y, new_y], dim=0)
+            train_y = train_y.view(-1)
+
+            gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
+            ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
+
+        return accuracies, best_y, best_candidate
+    
+    def _optimize_acqf_with_discrete_search_space(
+        self,
+        initial_conditions: torch.Tensor,
+        acquisition_function: AcquisitionFunction,
+        bounds: torch.Tensor,
+        discrete_dims: List[int],
+        discrete_values: Dict[int, List[float]],
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        lower_bounds = bounds[0]
+        upper_bounds = bounds[1]
+
+        candidates = []
+        acq_values = []
+        for i in range(initial_conditions.size(0)):
+            candidate = initial_conditions[i].clone()
+
+            # Enforce discrete constraints on specified dimensions
+            for dim in discrete_dims:
+                candidate[dim] = min(discrete_values[dim], key=lambda x: abs(x - candidate[dim]))
+
+            # Enforce bounds by clipping the values
+            candidate = torch.max(candidate, lower_bounds)
+            candidate = torch.min(candidate, upper_bounds)
+
+            # Evaluate the acquisition function
+            acq_value = acquisition_function(candidate.unsqueeze(0))
+            candidates.append(candidate)
+            acq_values.append(acq_value)
+
+        # Convert lists to tensors
+        candidates = torch.stack(candidates)
+        acq_values = torch.stack(acq_values)
+
+        return candidates, acq_values
 
 class MLP_GP_model(SingleTaskGP):
     def __init__(
