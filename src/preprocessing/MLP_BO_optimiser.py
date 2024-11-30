@@ -40,7 +40,17 @@ class MLP_BO_Optimiser:
         }
         self.last_error = None
 
-    def optimise(self, code_str, n_iter=20, initial_points=10):
+    def optimise(self, code_str, 
+                MLP_hidden1_nu: float,
+                MLP_hidden2_nu: float,
+                MLP_hidden3_nu: float,
+                MLP_hidden4_nu: float,
+                MLP_lr_nu: float,
+                MLP_activation_nu: float,
+                MLP_weight_decay_nu: float,
+                sample_per_batch=1,
+                n_iter=20, 
+                initial_points=10,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.
@@ -54,7 +64,16 @@ class MLP_BO_Optimiser:
             if not callable(self.objective_func):
                 raise ValueError("The code string must define a callable function")
             
-            return self._run_bayesian_optimisation(n_iter=n_iter, initial_points = initial_points)
+            return self._run_bayesian_optimisation(n_iter=n_iter, 
+                                                   initial_points = initial_points,
+                                                    MLP_hidden1_nu = MLP_hidden1_nu,
+                                                    MLP_hidden2_nu = MLP_hidden2_nu,
+                                                    MLP_hidden3_nu = MLP_hidden3_nu,
+                                                    MLP_hidden4_nu = MLP_hidden4_nu,
+                                                    MLP_lr_nu = MLP_lr_nu,
+                                                    MLP_activation_nu = MLP_activation_nu,
+                                                    MLP_weight_decay_nu = MLP_weight_decay_nu,
+                sample_per_batch=1,)
         except Exception as e:
             error_message = traceback.format_exc()
             logging.error("Execution failed with error: %s", error_message)
@@ -197,6 +216,7 @@ class MLP_BO_Optimiser:
         acq_values = torch.stack(acq_values)
 
         return candidates, acq_values
+
 
 class MLP_GP_model(SingleTaskGP):
     def __init__(
