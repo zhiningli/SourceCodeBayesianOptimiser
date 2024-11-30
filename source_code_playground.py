@@ -1,6 +1,5 @@
 from src.preprocessing.MLP_BO_optimiser import MLP_BO_Optimiser
-from math import sqrt
-import numpy as np
+import random
 
 code_str = """
 import openml
@@ -14,10 +13,6 @@ from sklearn.preprocessing import StandardScaler
 
 class CIFAR10Dataset(Dataset):
     def __init__(self, data, labels, transform=None):
-        Custom Dataset class to handle CIFAR-10 from Pandas DataFrames.
-        :param data: DataFrame containing features.
-        :param labels: Series containing labels.
-        :param transform: Optional transform to be applied to each image.
         self.data = data.values  # Convert DataFrame to NumPy array
         self.labels = labels.values  # Convert Series to NumPy array
         self.transform = transform
@@ -146,27 +141,44 @@ def run_mlp_classification(hidden1, hidden2, hidden3, hidden4, activation, lr, w
 optimiser = MLP_BO_Optimiser()
 
 results_for_plotting = {}
-for lengthscale_prior_mean in lengthscale_prior_means:
+
+hyperparameters = {
+    "MLP_hidden1_nu": [0.5, 1.5, 2.5],
+    "MLP_hidden2_nu": [0.5, 1.5, 2.5],
+    "MLP_hidden3_nu": [0.5, 1.5, 2.5],
+    "MLP_hidden4_nu": [0.5, 1.5, 2.5],
+    "MLP_lr_nu": [0.5, 1.5, 2.5],
+    "MLP_activation_nu": [0.5, 1.5, 2.5],
+    "MLP_weight_decay_nu": [0.5, 1.5, 2.5],
+}
+
+results_for_plotting = {}  # Dictionary to store results
+
+for i in range(20):  # Loop for 20 sets of hyperparameters
+    print(f"Running {i + 1} set of BO hyperparameters")
     
-    averaged_y = 0
-    best_y = 0
-    for _ in range(3):
-        result, best_accuracy, best_SVM_hyperparameters = optimiser.optimise(
-            code_str = source_code_str,
-            n_iter=30, initial_points=10, sample_per_batch=1,
-            svm_kernel_lengthscale_prior_mean = sqrt(2),
-            svm_kernel_outputscale_prior_mean = sqrt(2),
-            svm_C_lengthscale_prior_mean = sqrt(2),
-            svm_C_outputscale_prior_mean = lengthscale_prior_mean,
-            svm_gamma_lengthscale_prior_mean = sqrt(2),
-            svm_gamma_outputscale_prior_mean = sqrt(2),
-            svm_coef0_lengthscale_prior_mean = sqrt(2),
-            svm_coef0_outputscale_prior_mean = sqrt(2),
-        )
+    # Randomly sample hyperparameter indices
+    hyper = [random.randint(0, 2) for _ in range(7)]  # Generate 7 random indices for hyperparameters
+    print(f"Selected hyperparameter indices: {hyper}")
 
-        if best_accuracy >= best_y:
-            best_y = best_accuracy
-        averaged_y += best_y
-    results_for_plotting[lengthscale_prior_mean] = averaged_y / 3
+    # Run the optimization for the selected hyperparameters
+    accuracies, best_y, best_candidate = optimiser.optimise(
+        code_str=code_str,
+        MLP_hidden1_nu=hyperparameters["MLP_hidden1_nu"][hyper[0]],
+        MLP_hidden2_nu=hyperparameters["MLP_hidden2_nu"][hyper[1]],
+        MLP_hidden3_nu=hyperparameters["MLP_hidden3_nu"][hyper[2]],
+        MLP_hidden4_nu=hyperparameters["MLP_hidden4_nu"][hyper[3]],
+        MLP_lr_nu=hyperparameters["MLP_lr_nu"][hyper[4]],
+        MLP_activation_nu=hyperparameters["MLP_activation_nu"][hyper[5]],
+        MLP_weight_decay_nu=hyperparameters["MLP_weight_decay_nu"][hyper[6]],
+    )
+    
+    # Store results for plotting
+    results_for_plotting[tuple(hyper)] = (accuracies, best_y, best_candidate)
+    print(f"Best Y: {best_y}, Best Candidate: {best_candidate}")
 
-print(results_for_plotting)
+
+
+
+    
+

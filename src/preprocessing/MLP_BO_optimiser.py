@@ -22,6 +22,7 @@ from gpytorch.priors import LogNormalPrior
 from gpytorch.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from tqdm import tqdm
 
 
 class MLP_BO_Optimiser:
@@ -57,29 +58,24 @@ class MLP_BO_Optimiser:
         :param n_iter: Number of optimization iterations.
         :param initial_points: Number of initial random samples.
         """
-        try:
-            namespace = {}
-            exec(code_str, namespace)
-            self.objective_func = namespace.get("run_mpl_classitication")
-            if not callable(self.objective_func):
-                raise ValueError("The code string must define a callable function")
-            
-            return self._run_bayesian_optimisation(n_iter=n_iter, 
-                                                   initial_points = initial_points,
-                                                    MLP_hidden1_nu = MLP_hidden1_nu,
-                                                    MLP_hidden2_nu = MLP_hidden2_nu,
-                                                    MLP_hidden3_nu = MLP_hidden3_nu,
-                                                    MLP_hidden4_nu = MLP_hidden4_nu,
-                                                    MLP_lr_nu = MLP_lr_nu,
-                                                    MLP_activation_nu = MLP_activation_nu,
-                                                    MLP_weight_decay_nu = MLP_weight_decay_nu,
-                sample_per_batch=1,)
-        except Exception as e:
-            error_message = traceback.format_exc()
-            logging.error("Execution failed with error: %s", error_message)
-            self.last_error = error_message
-            return False
-    
+
+        namespace = {}
+        exec(code_str, namespace)
+        self.objective_func = namespace.get("run_mlp_classification")
+        if not callable(self.objective_func):
+            raise ValueError("The code string must define a callable function")
+        
+        return self._run_bayesian_optimisation(n_iter=n_iter, 
+                                                initial_points = initial_points,
+                                                MLP_hidden1_nu = MLP_hidden1_nu,
+                                                MLP_hidden2_nu = MLP_hidden2_nu,
+                                                MLP_hidden3_nu = MLP_hidden3_nu,
+                                                MLP_hidden4_nu = MLP_hidden4_nu,
+                                                MLP_lr_nu = MLP_lr_nu,
+                                                MLP_activation_nu = MLP_activation_nu,
+                                                MLP_weight_decay_nu = MLP_weight_decay_nu,
+            sample_per_batch=1,)
+
     def _botorch_objective(self, x):
         """
         A thin wrapper to map input tensor to hyperparameters for MLP
@@ -117,7 +113,7 @@ class MLP_BO_Optimiser:
         bounds = torch.tensor([
             [0, 0, 0, 0, 0, 0, 0], 
             [3, 3, 3, 3, 2, 2, 2]   
-        ], dtype=torch.float())
+        ], dtype=torch.float)
 
         discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7]
         discrete_values = {
@@ -131,7 +127,7 @@ class MLP_BO_Optimiser:
         }
 
         train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
-        train_y = torch.tensor([self._botorch_objective(x).items for x in train_x])
+        train_y = torch.tensor([self._botorch_objective(x).item for x in train_x])
         train_y = standardize(train_y)
 
         likelihood = GaussianLikelihood().to(torch.float64)
@@ -155,30 +151,35 @@ class MLP_BO_Optimiser:
         best_y = float('-inf')
         accuracies = []
 
-        for i in range(n_iter):
-            initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
-            
-            candidate, acq_value = self._optimize_acqf_with_discrete_search_space(
-                initial_conditions=initial_conditions,
-                acquisition_function=ei,
-                bounds=bounds,
-                discrete_dims=discrete_dims,
-                discrete_values=discrete_values
-            )
-            
-            train_y = train_y.view(-1, 1)
-            new_y = self._botorch_objective(candidate).view(1, 1)
-            new_y_value = new_y.item()
-            accuracies.append(new_y_value)
-            if new_y_value >= best_y:
-                best_y = new_y_value 
-                best_candidate = candidate 
-            train_x = torch.cat([train_x, candidate.view(1, -1)])
-            train_y = torch.cat([train_y, new_y], dim=0)
-            train_y = train_y.view(-1)
+        with tqdm(total=n_iter, desc="Bayesian Optimization Progress", unit="iter") as pbar:
+            for i in range(n_iter):
+                initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
+                
+                candidate, acq_value = self._optimize_acqf_with_discrete_search_space(
+                    initial_conditions=initial_conditions,
+                    acquisition_function=ei,
+                    bounds=bounds,
+                    discrete_dims=discrete_dims,
+                    discrete_values=discrete_values
+                )
+                
+                train_y = train_y.view(-1, 1)
+                new_y = self._botorch_objective(candidate).view(1, 1)
+                new_y_value = new_y.item()
+                accuracies.append(new_y_value)
+                if new_y_value >= best_y:
+                    best_y = new_y_value 
+                    best_candidate = candidate 
+                train_x = torch.cat([train_x, candidate.view(1, -1)])
+                train_y = torch.cat([train_y, new_y], dim=0)
+                train_y = train_y.view(-1)
 
-            gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
-            ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
+                gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
+                ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
+
+                # Update progress bar
+                pbar.set_postfix({"Best Y": best_y})
+                pbar.update(1)
 
         return accuracies, best_y, best_candidate
     

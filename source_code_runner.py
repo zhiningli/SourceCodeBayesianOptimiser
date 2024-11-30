@@ -9,12 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 class CIFAR10Dataset(Dataset):
     def __init__(self, data, labels, transform=None):
-        """
-        Custom Dataset class to handle CIFAR-10 from Pandas DataFrames.
-        :param data: DataFrame containing features.
-        :param labels: Series containing labels.
-        :param transform: Optional transform to be applied to each image.
-        """
         self.data = data.values  # Convert DataFrame to NumPy array
         self.labels = labels.values  # Convert Series to NumPy array
         self.transform = transform
@@ -46,25 +40,16 @@ def preprocess(image, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)):
 
 
 def load_openml_cifar10():
-    """
-    Load CIFAR-10 dataset from OpenML and return it as pandas DataFrames and Series.
-    :return: Training and validation datasets split as pandas DataFrames and Series.
-    """
     # Load dataset as a DataFrame
     dataset = openml.datasets.get_dataset(dataset_id=40927)  # CIFAR-10 dataset ID
 
     # Get data and ensure target is included
     df, _, _, _ = dataset.get_data(dataset_format="dataframe")
 
-    # Debugging: Inspect columns
-    print(f"Columns in dataset: {df.columns}")
 
     X = df.iloc[:, :-1].to_numpy(dtype=np.float32)  # Exclude target column
     y = df.iloc[:, -1].to_numpy(dtype=np.int64)  # Extract target column
-    print(type(X))
-    # Debugging: Check dataset shapes
-    print(f"Shape of X: {X.shape}, expected: (n_samples, 3072)")
-    print(f"Shape of y: {y.shape}, expected: (n_samples,)")
+
 
     # Wrap features and labels into pandas DataFrame/Series
     X_df = pd.DataFrame(X)
@@ -76,10 +61,6 @@ def load_openml_cifar10():
     y_train = y_series.iloc[:train_size].reset_index(drop=True)
     X_val = X_df.iloc[train_size:].reset_index(drop=True)
     y_val = y_series.iloc[train_size:].reset_index(drop=True)
-
-    # Debugging: Check training and validation dataset sizes
-    print(f"Training dataset shape: X_train={X_train.shape}, y_train={y_train.shape}")
-    print(f"Validation dataset shape: X_val={X_val.shape}, y_val={y_val.shape}")
 
     return X_train, y_train, X_val, y_val
 
@@ -148,16 +129,14 @@ def run_mlp_classification(hidden1, hidden2, hidden3, hidden4, activation, lr, w
             correct += (predicted == y_batch).sum().item()
 
     accuracy = correct / total
+    print(accuracy)
     return accuracy
-
-
-# Example usage
 
 
 accuracy = run_mlp_classification(
     hidden1=64,
-    hidden2=64,
-    hidden3=32,
+    hidden2=128,
+    hidden3 = 64,
     hidden4=32,
     activation="ReLU",
     lr=0.001,
