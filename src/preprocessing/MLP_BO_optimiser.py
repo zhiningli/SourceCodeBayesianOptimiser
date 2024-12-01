@@ -57,7 +57,7 @@ class MLP_BO_Optimiser:
                 MLP_batch_size_nu: float,
                 sample_per_batch=1,
                 n_iter=20, 
-                initial_points=2,):
+                initial_points=10,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.

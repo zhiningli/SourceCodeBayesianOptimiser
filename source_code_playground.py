@@ -178,7 +178,7 @@ hyperparameters = {
 
 results_for_plotting = {}  # Dictionary to store results
 
-for i in range(20):  # Loop for 20 sets of hyperparameters
+for i in range(10):  # Loop for 20 sets of hyperparameters
     print(f"Running {i + 1} set of BO hyperparameters")
     
     # Randomly sample hyperparameter indices and retrieve their corresponding values
