@@ -4,6 +4,7 @@ from torch import nn
 from botorch.utils.transforms import standardize
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from botorch.models import SingleTaskGP
+from botorch.models.model import Model
 from botorch.models.gp_regression import SingleTaskGP, ExactGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.fully_bayesian import MaternKernel
@@ -21,7 +22,8 @@ from gpytorch.priors import LogNormalPrior
 from gpytorch.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
-from gpytorch.distributions import MultitaskMultivariateNormal
+from gpytorch.distributions import MultivariateNormal
+from gpytorch.utils.grid import scale_to_bounds
 from tqdm import tqdm
 
 
@@ -34,30 +36,19 @@ class MLP_BO_Optimiser:
             'conv_feature_num': [8, 16, 32],
             'conv_kernel_size': [3, 5, 7],
             'conv_stride': [1, 2],
-            'hidden1': [128, 512, 1024],
-            'hidden2': [128, 512, 1024],
+            'hidden1': [128, 256, 512],
             'activation': ['ReLU','Tanh','LeakyReLU'],
             'lr': [0.0001, 0.001, 0.01],
             'weight_decay': [0.0, 0.0001, 0.001],
-            'epoch': [5, 10, 15],
+            'epoch': [15, 25, 35],
             'batch_size': [64, 128]
         }
         self.last_error = None
 
     def optimise(self, code_str, 
-                MLP_conv_feature_num_nu: float,
-                MLP_conv_kernel_size_nu: float,
-                MLP_conv_stride_nu: float,
-                MLP_hidden1_nu: float,
-                MLP_hidden2_nu: float,
-                MLP_lr_nu: float,
-                MLP_activation_nu: float,
-                MLP_weight_decay_nu: float,
-                MLP_epoch_nu: float,
-                MLP_batch_size_nu: float,
                 sample_per_batch=1,
                 n_iter=20, 
-                initial_points=10,):
+                initial_points=50,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.
@@ -73,16 +64,6 @@ class MLP_BO_Optimiser:
         
         return self._run_bayesian_optimisation(n_iter=n_iter, 
                                                 initial_points = initial_points,
-                                                MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
-                                                MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
-                                                MLP_conv_stride_nu= MLP_conv_stride_nu,
-                                                MLP_hidden1_nu = MLP_hidden1_nu,
-                                                MLP_hidden2_nu = MLP_hidden2_nu,
-                                                MLP_lr_nu = MLP_lr_nu,
-                                                MLP_activation_nu = MLP_activation_nu,
-                                                MLP_weight_decay_nu = MLP_weight_decay_nu,
-                                                MLP_epoch_nu = MLP_epoch_nu,
-                                                MLP_batch_size_nu = MLP_batch_size_nu,
                                                 sample_per_batch= sample_per_batch)
 
     def _botorch_objective(self, x):
@@ -95,12 +76,11 @@ class MLP_BO_Optimiser:
             'conv_kernel_size': self.search_space['conv_kernel_size'][int(np_params[1])],
             'conv_stride': self.search_space['conv_stride'][int(np_params[2])],
             'hidden1': self.search_space['hidden1'][int(np_params[3])],
-            'hidden2': self.search_space['hidden2'][int(np_params[4])],
-            'lr': self.search_space['lr'][int(np_params[5])],
-            'activation': self.search_space['activation'][int(np_params[6])],
-            'weight_decay': self.search_space['weight_decay'][int(np_params[7])],
-            'epoch': self.search_space['epoch'][int(np_params[8])],
-            'batch_size': self.search_space['batch_size'][int(np_params[9])],
+            'lr': self.search_space['lr'][int(np_params[4])],
+            'activation': self.search_space['activation'][int(np_params[5])],
+            'weight_decay': self.search_space['weight_decay'][int(np_params[6])],
+            'epoch': self.search_space['epoch'][int(np_params[7])],
+            'batch_size': self.search_space['batch_size'][int(np_params[8])],
         }
 
         return torch.tensor(self.objective_func(**params), dtype=torch.float64)
@@ -109,28 +89,18 @@ class MLP_BO_Optimiser:
     def _run_bayesian_optimisation(self, 
                                     n_iter,
                                     initial_points,
-                                    MLP_conv_feature_num_nu : float,
-                                    MLP_conv_kernel_size_nu : float,
-                                    MLP_conv_stride_nu : float,
-                                    MLP_hidden1_nu: float,
-                                    MLP_hidden2_nu: float,
-                                    MLP_lr_nu: float,
-                                    MLP_activation_nu: float,
-                                    MLP_weight_decay_nu: float,
-                                    MLP_epoch_nu : float,
-                                    MLP_batch_size_nu : float,
                                     sample_per_batch: float
                                    ):
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
         """
-
+        torch.manual_seed(42)
         bounds = torch.tensor([
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-            [3, 3, 2, 3, 3, 3, 3, 3, 3, 2]   
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+            [3, 3, 2, 3, 3, 3, 3, 3, 2]   
         ], dtype=torch.float64)
 
-        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         discrete_values = {
             0: [0, 1, 2],
             1: [0, 1, 2],
@@ -140,26 +110,22 @@ class MLP_BO_Optimiser:
             5: [0, 1, 2],
             6: [0, 1, 2],
             7: [0, 1, 2],
-            8: [0, 1, 2],
-            9: [0, 1],
+            8: [0, 1],
         }
         print("Running bayesian optimisation...")
         train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
         print("Running objective function for 10 initial points...")
         train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float64).view(-1, 1)
         likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (MLP_GP_model_addition_kernel( MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
-                           MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
-                           MLP_conv_stride_nu = MLP_conv_stride_nu,
-                           MLP_hidden1_nu = MLP_hidden1_nu, 
-                           MLP_hidden2_nu = MLP_hidden2_nu,
-                           MLP_lr_nu = MLP_lr_nu,
-                           MLP_activation_nu = MLP_activation_nu,
-                           MLP_weight_decay_nu = MLP_weight_decay_nu,
-                           MLP_epoch_nu = MLP_epoch_nu,
-                           MLP_batch_size_nu = MLP_batch_size_nu,
-                           train_X=train_x, train_Y=train_y, likelihood=likelihood
-                          ).to(torch.float64))
+        gp = (MLP_GP_DKL(
+            train_x= train_x,
+            train_y= train_y,
+            likelihood=likelihood,
+        ).to(torch.float64))
+
+        if torch.cuda.is_available:
+            likelihood = likelihood.cuda()
+            gp = gp.cuda()
         
         mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
         fit_gpytorch_mll_torch(mll)
@@ -444,30 +410,31 @@ class MLP_GP_model_addition_kernel(SingleTaskGP):
         )
 
 
-class DKL(torch.nn.Module):
+class DKL(torch.nn.Sequential):
 
-    def __init__(self, input_dim, hidden_dim, output_dim):
-        super().__init__()
+    def __init__(self):
+        super(DKL, self).__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(input_dim, hidden_dim),
+            torch.nn.Linear(10, 20),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_dim, output_dim)
+            torch.nn.Linear(20, 10)
         )
 
-    def forward(self, x):
-        return self.net(x)
 
-class MLP_GP_DKL(ExactGP):
+class MLP_GP_DKL(SingleTaskGP):
 
-    def __init__(self, train_x, train_y, likelihood, input_dim, hidden_dim, output_dim):
-        super().__init__(train_x, train_y, likelihood)
-        self.DKL = DKL(input_dim, hidden_dim, output_dim)
+    def __init__(self, train_x, train_y, likelihood,
+                train_Yvar: Optional[Tensor] = None,
+                outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
+                input_transform: Optional[InputTransform] = None,):
+        super().__init__(train_X = train_x, train_Y = train_y, likelihood = likelihood, train_Yvar= train_Yvar, outcome_transform= outcome_transform, input_transform= input_transform)
+        self.DKL = DKL()
         self.mean_module = ConstantMean()
         self.covar_module = ScaleKernel(RBFKernel())
+    
+    def forward(self, x: Tensor) -> MultivariateNormal:
 
-    def forward(self, x):
-        transformed_x = self.DKL(x)
+        transformed_x = scale_to_bounds(self.DKL(x), -1., 1.)
         mean_x = self.mean_module(transformed_x)
         covar_x = self.covar_module(transformed_x)
-
-        return MultitaskMultivariateNormal(mean_x, covar_x)
+        return MultivariateNormal(mean_x, covar_x)
