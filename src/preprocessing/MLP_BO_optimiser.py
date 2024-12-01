@@ -4,7 +4,7 @@ from torch import nn
 from botorch.utils.transforms import standardize
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from botorch.models import SingleTaskGP
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP, ExactGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.fully_bayesian import MaternKernel
 from botorch.models.transforms.input import InputTransform
@@ -16,10 +16,12 @@ from typing import Any, Optional, Union, Dict, Tuple, List
 from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.acquisition import UpperConfidenceBound, AcquisitionFunction
 from gpytorch.kernels import ScaleKernel, RBFKernel
+from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.priors import LogNormalPrior
 from gpytorch.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.distributions import MultitaskMultivariateNormal
 from tqdm import tqdm
 
 
@@ -101,7 +103,7 @@ class MLP_BO_Optimiser:
             'batch_size': self.search_space['batch_size'][int(np_params[9])],
         }
 
-        return torch.tensor(self.objective_func(**params), dtype=torch.float)
+        return torch.tensor(self.objective_func(**params), dtype=torch.float64)
 
 
     def _run_bayesian_optimisation(self, 
@@ -126,7 +128,7 @@ class MLP_BO_Optimiser:
         bounds = torch.tensor([
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
             [3, 3, 2, 3, 3, 3, 3, 3, 3, 2]   
-        ], dtype=torch.float)
+        ], dtype=torch.float64)
 
         discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         discrete_values = {
@@ -144,9 +146,9 @@ class MLP_BO_Optimiser:
         print("Running bayesian optimisation...")
         train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
         print("Running objective function for 10 initial points...")
-        train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float).view(-1, 1)
+        train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float64).view(-1, 1)
         likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (MLP_GP_model( MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
+        gp = (MLP_GP_model_addition_kernel( MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
                            MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
                            MLP_conv_stride_nu = MLP_conv_stride_nu,
                            MLP_hidden1_nu = MLP_hidden1_nu, 
@@ -336,3 +338,136 @@ class MLP_GP_model(SingleTaskGP):
             input_transform=input_transform,
         )
 
+
+class MLP_GP_model_addition_kernel(SingleTaskGP):
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        MLP_conv_feature_num_nu : float,
+        MLP_conv_kernel_size_nu : float,
+        MLP_conv_stride_nu : float,
+        MLP_hidden1_nu: float,
+        MLP_hidden2_nu: float,
+        MLP_lr_nu: float,
+        MLP_activation_nu: float,
+        MLP_weight_decay_nu: float,
+        MLP_epoch_nu : float,
+        MLP_batch_size_nu : float,
+        likelihood: Optional[Likelihood],
+        train_Yvar: Optional[Tensor] = None,
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
+        input_transform: Optional[InputTransform] = None,
+    ) -> None:
+        
+        matern_kernel_for_conv_feature_num = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_feature_num_nu,
+            )
+        )
+
+        matern_kernel_for_conv_kernel_size = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_kernel_size_nu,
+            )
+        )
+
+        matern_kernel_for_conv_stride = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_stride_nu,
+            )
+        )
+
+
+        matern_kernel_for_hidden1 = ScaleKernel(
+            MaternKernel(
+                nu = MLP_hidden1_nu,
+            )
+        )
+
+        matern_kernel_for_hidden2 = ScaleKernel(
+            MaternKernel(
+                nu = MLP_hidden2_nu,
+            )
+        )
+
+        matern_kernel_for_lr = ScaleKernel(
+            MaternKernel(
+                nu = MLP_lr_nu,
+            )
+        )
+
+        matern_kernel_for_activation = ScaleKernel(
+            MaternKernel(
+                nu = MLP_activation_nu,
+            )
+        )
+
+        matern_kernel_for_weight_decay = ScaleKernel(
+            MaternKernel(
+                nu = MLP_weight_decay_nu
+            )
+        )
+
+        matern_kernel_for_epoch = ScaleKernel(
+            MaternKernel(
+                nu = MLP_epoch_nu
+            )
+        )
+
+        matern_kernel_for_batch_size = ScaleKernel(
+            MaternKernel(
+                nu = MLP_batch_size_nu
+            )
+        )
+
+        covar_module = (
+                        matern_kernel_for_conv_feature_num +
+                        matern_kernel_for_conv_kernel_size +
+                        matern_kernel_for_conv_stride +
+                        matern_kernel_for_hidden1 +
+                        matern_kernel_for_hidden2 + 
+                        matern_kernel_for_lr + 
+                        matern_kernel_for_activation + 
+                        matern_kernel_for_weight_decay + 
+                        matern_kernel_for_epoch + 
+                        matern_kernel_for_batch_size)
+
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            likelihood=likelihood,
+            covar_module=covar_module,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
+        )
+
+
+class DKL(torch.nn.Module):
+
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super().__init__()
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, output_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+class MLP_GP_DKL(ExactGP):
+
+    def __init__(self, train_x, train_y, likelihood, input_dim, hidden_dim, output_dim):
+        super().__init__(train_x, train_y, likelihood)
+        self.DKL = DKL(input_dim, hidden_dim, output_dim)
+        self.mean_module = ConstantMean()
+        self.covar_module = ScaleKernel(RBFKernel())
+
+    def forward(self, x):
+        transformed_x = self.DKL(x)
+        mean_x = self.mean_module(transformed_x)
+        covar_x = self.covar_module(transformed_x)
+
+        return MultitaskMultivariateNormal(mean_x, covar_x)

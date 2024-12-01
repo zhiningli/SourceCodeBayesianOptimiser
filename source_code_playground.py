@@ -178,7 +178,7 @@ hyperparameters = {
 
 results_for_plotting = {}  # Dictionary to store results
 
-for i in range(10):  # Loop for 20 sets of hyperparameters
+for i in range(5):  # Loop for 20 sets of hyperparameters
     print(f"Running {i + 1} set of BO hyperparameters")
     
     # Randomly sample hyperparameter indices and retrieve their corresponding values
@@ -221,10 +221,9 @@ for i in range(10):  # Loop for 20 sets of hyperparameters
     }
     print(f"Best Y: {best_y}, Best Candidate: {best_candidate}")
 
-# Export results to a JSON file
-output_file = "bo_results.json"
+output_file = "bo_results.txt"
 with open(output_file, "w") as f:
-    json.dump(results_for_plotting, f, indent=4)
+    f.write(repr(results_for_plotting))
 
 print(f"Results saved to {output_file}")
 
