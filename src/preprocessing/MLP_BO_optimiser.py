@@ -31,11 +31,11 @@ class MLP_BO_Optimiser:
         self.params = None
         self.objective_func = None
         self.search_space = {
+            'conv_feature_num': [8, 16, 32],
             'conv_kernel_size': [3, 5, 7],
             'conv_stride': [1, 2],
-            'max_pool_kernel_size': [1, 3],
-            'max_pool_stride': [1, 2],
-            'hidden': [128, 512, 1024],
+            'hidden1': [128, 512, 1024],
+            'hidden2': [128, 512, 1024],
             'activation': ['ReLU','Tanh','LeakyReLU'],
             'lr': [0.0001, 0.001, 0.01],
             'weight_decay': [0.0, 0.0001, 0.001],
@@ -45,17 +45,19 @@ class MLP_BO_Optimiser:
         self.last_error = None
 
     def optimise(self, code_str, 
+                MLP_conv_feature_num_nu: float,
+                MLP_conv_kernel_size_nu: float,
+                MLP_conv_stride_nu: float,
                 MLP_hidden1_nu: float,
                 MLP_hidden2_nu: float,
-                MLP_hidden3_nu: float,
-                MLP_hidden4_nu: float,
                 MLP_lr_nu: float,
                 MLP_activation_nu: float,
                 MLP_weight_decay_nu: float,
                 MLP_epoch_nu: float,
+                MLP_batch_size_nu: float,
                 sample_per_batch=1,
                 n_iter=20, 
-                initial_points=10,):
+                initial_points=2,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.
@@ -71,14 +73,17 @@ class MLP_BO_Optimiser:
         
         return self._run_bayesian_optimisation(n_iter=n_iter, 
                                                 initial_points = initial_points,
+                                                MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
+                                                MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
+                                                MLP_conv_stride_nu= MLP_conv_stride_nu,
                                                 MLP_hidden1_nu = MLP_hidden1_nu,
                                                 MLP_hidden2_nu = MLP_hidden2_nu,
-                                                MLP_hidden3_nu = MLP_hidden3_nu,
-                                                MLP_hidden4_nu = MLP_hidden4_nu,
                                                 MLP_lr_nu = MLP_lr_nu,
                                                 MLP_activation_nu = MLP_activation_nu,
                                                 MLP_weight_decay_nu = MLP_weight_decay_nu,
-            sample_per_batch=1,)
+                                                MLP_epoch_nu = MLP_epoch_nu,
+                                                MLP_batch_size_nu = MLP_batch_size_nu,
+                                                sample_per_batch= sample_per_batch)
 
     def _botorch_objective(self, x):
         """
@@ -86,13 +91,16 @@ class MLP_BO_Optimiser:
         """
         np_params = x.detach().numpy().squeeze()
         params = {
-            'hidden1': self.search_space['hidden1'][int(np_params[0])],
-            'hidden2': self.search_space['hidden2'][int(np_params[1])],
-            'hidden3': self.search_space['hidden3'][int(np_params[2])],
-            'hidden4': self.search_space['hidden4'][int(np_params[3])],
-            'activation': self.search_space['activation'][int(np_params[4])],
+            'conv_feature_num': self.search_space['conv_feature_num'][int(np_params[0])],
+            'conv_kernel_size': self.search_space['conv_kernel_size'][int(np_params[1])],
+            'conv_stride': self.search_space['conv_stride'][int(np_params[2])],
+            'hidden1': self.search_space['hidden1'][int(np_params[3])],
+            'hidden2': self.search_space['hidden2'][int(np_params[4])],
             'lr': self.search_space['lr'][int(np_params[5])],
-            'weight_decay': self.search_space['weight_decay'][int(np_params[6])],
+            'activation': self.search_space['activation'][int(np_params[6])],
+            'weight_decay': self.search_space['weight_decay'][int(np_params[7])],
+            'epoch': self.search_space['epoch'][int(np_params[8])],
+            'batch_size': self.search_space['batch_size'][int(np_params[9])],
         }
 
         return torch.tensor(self.objective_func(**params), dtype=torch.float)
@@ -101,46 +109,55 @@ class MLP_BO_Optimiser:
     def _run_bayesian_optimisation(self, 
                                     n_iter,
                                     initial_points,
+                                    MLP_conv_feature_num_nu : float,
+                                    MLP_conv_kernel_size_nu : float,
+                                    MLP_conv_stride_nu : float,
                                     MLP_hidden1_nu: float,
                                     MLP_hidden2_nu: float,
-                                    MLP_hidden3_nu: float,
-                                    MLP_hidden4_nu: float,
                                     MLP_lr_nu: float,
                                     MLP_activation_nu: float,
                                     MLP_weight_decay_nu: float,
-                                    sample_per_batch=1
+                                    MLP_epoch_nu : float,
+                                    MLP_batch_size_nu : float,
+                                    sample_per_batch: float
                                    ):
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
         """
 
         bounds = torch.tensor([
-            [0, 0, 0, 0, 0, 0, 0], 
-            [3, 3, 3, 3, 2, 2, 2]   
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+            [3, 3, 2, 3, 3, 3, 3, 3, 3, 2]   
         ], dtype=torch.float)
 
-        discrete_dims = [0, 1, 2, 3, 4, 5, 6]
+        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         discrete_values = {
             0: [0, 1, 2],
             1: [0, 1, 2],
-            2: [0, 1, 2],
+            2: [0, 1],
             3: [0, 1, 2],
             4: [0, 1, 2],
             5: [0, 1, 2],
             6: [0, 1, 2],
+            7: [0, 1, 2],
+            8: [0, 1, 2],
+            9: [0, 1],
         }
         print("Running bayesian optimisation...")
         train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
         print("Running objective function for 10 initial points...")
         train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float).view(-1, 1)
         likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (MLP_GP_model(MLP_hidden1_nu = MLP_hidden1_nu, 
+        gp = (MLP_GP_model( MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
+                           MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
+                           MLP_conv_stride_nu = MLP_conv_stride_nu,
+                           MLP_hidden1_nu = MLP_hidden1_nu, 
                            MLP_hidden2_nu = MLP_hidden2_nu,
-                           MLP_hidden3_nu = MLP_hidden3_nu, 
-                           MLP_hidden4_nu = MLP_hidden4_nu,
                            MLP_lr_nu = MLP_lr_nu,
                            MLP_activation_nu = MLP_activation_nu,
                            MLP_weight_decay_nu = MLP_weight_decay_nu,
+                           MLP_epoch_nu = MLP_epoch_nu,
+                           MLP_batch_size_nu = MLP_batch_size_nu,
                            train_X=train_x, train_Y=train_y, likelihood=likelihood
                           ).to(torch.float64))
         
@@ -222,18 +239,40 @@ class MLP_GP_model(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
+        MLP_conv_feature_num_nu : float,
+        MLP_conv_kernel_size_nu : float,
+        MLP_conv_stride_nu : float,
         MLP_hidden1_nu: float,
         MLP_hidden2_nu: float,
-        MLP_hidden3_nu: float,
-        MLP_hidden4_nu: float,
         MLP_lr_nu: float,
         MLP_activation_nu: float,
         MLP_weight_decay_nu: float,
+        MLP_epoch_nu : float,
+        MLP_batch_size_nu : float,
         likelihood: Optional[Likelihood],
         train_Yvar: Optional[Tensor] = None,
         outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
+        
+        matern_kernel_for_conv_feature_num = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_feature_num_nu,
+            )
+        )
+
+        matern_kernel_for_conv_kernel_size = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_kernel_size_nu,
+            )
+        )
+
+        matern_kernel_for_conv_stride = ScaleKernel(
+            MaternKernel(
+                nu = MLP_conv_stride_nu,
+            )
+        )
+
 
         matern_kernel_for_hidden1 = ScaleKernel(
             MaternKernel(
@@ -244,18 +283,6 @@ class MLP_GP_model(SingleTaskGP):
         matern_kernel_for_hidden2 = ScaleKernel(
             MaternKernel(
                 nu = MLP_hidden2_nu,
-            )
-        )
-
-        matern_kernel_for_hidden3 = ScaleKernel(
-            MaternKernel(
-                nu = MLP_hidden3_nu,
-            )
-        )
-
-        matern_kernel_for_hidden4 = ScaleKernel(
-            MaternKernel(
-                nu = MLP_hidden4_nu,
             )
         )
 
@@ -277,7 +304,29 @@ class MLP_GP_model(SingleTaskGP):
             )
         )
 
-        covar_module = matern_kernel_for_hidden1 * matern_kernel_for_hidden2 * matern_kernel_for_hidden3 * matern_kernel_for_hidden4 * matern_kernel_for_lr * matern_kernel_for_activation * matern_kernel_for_weight_decay
+        matern_kernel_for_epoch = ScaleKernel(
+            MaternKernel(
+                nu = MLP_epoch_nu
+            )
+        )
+
+        matern_kernel_for_batch_size = ScaleKernel(
+            MaternKernel(
+                nu = MLP_batch_size_nu
+            )
+        )
+
+        covar_module = (
+                        matern_kernel_for_conv_feature_num *
+                        matern_kernel_for_conv_kernel_size *
+                        matern_kernel_for_conv_stride *
+                        matern_kernel_for_hidden1 * 
+                        matern_kernel_for_hidden2 * 
+                        matern_kernel_for_lr * 
+                        matern_kernel_for_activation * 
+                        matern_kernel_for_weight_decay * 
+                        matern_kernel_for_epoch * 
+                        matern_kernel_for_batch_size)
 
         super().__init__(
             train_X=train_X,

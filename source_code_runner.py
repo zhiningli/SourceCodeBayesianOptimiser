@@ -67,7 +67,7 @@ def load_openml_cifar10():
 
 
 
-def run_mlp_classification(hidden, conv_kernel_size, conv_stride, activation, max_pool_kernel_size, lr, weight_decay, max_pool_stride, epoch, batch_size):
+def run_mlp_classification(conv_feature_num, hidden1, hidden2, conv_kernel_size, conv_stride, activation, lr, weight_decay, epoch, batch_size):
     # Load CIFAR-10 dataset from OpenML
     X_train, y_train, X_val, y_val = load_openml_cifar10()
 
@@ -89,14 +89,15 @@ def run_mlp_classification(hidden, conv_kernel_size, conv_stride, activation, ma
     activation_fn = {'ReLU': nn.ReLU, 'Tanh': nn.Tanh, 'LeakyReLU': nn.LeakyReLU}[activation]
     model = nn.Sequential(
         # Convolutional Layer
-        nn.Conv2d(3, 32, kernel_size=conv_kernel_size, stride = conv_stride, padding=int(conv_kernel_size)//2),
+        nn.Conv2d(3, conv_feature_num, kernel_size=conv_kernel_size, stride = conv_stride, padding=int(conv_kernel_size)//2),
         nn.ReLU(),  
-        nn.MaxPool2d(kernel_size=max_pool_kernel_size, stride= max_pool_stride, padding=int(max_pool_kernel_size)//2),
+        nn.MaxPool2d(kernel_size=3, stride= 1, padding=1),
 
         nn.Flatten(), 
-        nn.Linear(int(32**3 / (conv_stride**2 * max_pool_stride**2)), hidden),  
-        nn.ReLU(),
-        nn.Linear(hidden, 10) 
+        nn.Linear(int(conv_feature_num* 32 ** 2 / conv_stride**2), hidden1),  
+        activation_fn(),
+        nn.Linear(hidden1, hidden2),
+        nn.Linear(hidden2, 10) 
 )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -183,14 +184,14 @@ def run_mlp_classification(hidden, conv_kernel_size, conv_stride, activation, ma
 
 
 accuracy = run_mlp_classification(
-    conv_kernel_size = 7,
+    conv_feature_num = 32,
+    conv_kernel_size = 3,
     conv_stride = 1,
-    max_pool_kernel_size = 3, 
-    max_pool_stride = 2,
-    hidden=1024,
+    hidden1=1024,
+    hidden2=512,
     activation="ReLU",
-    lr=0.01,
-    weight_decay=0.01,
+    lr=0.001,
+    weight_decay=0.001,
     epoch = 25,
     batch_size=64
 )
