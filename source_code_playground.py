@@ -1,5 +1,7 @@
 from src.preprocessing.MLP_BO_optimiser import MLP_BO_Optimiser
 import random
+import json
+import torch
 
 code_str = """
 import openml
@@ -71,7 +73,7 @@ def load_openml_cifar10():
 
 
 
-def run_mlp_classification(hidden1, hidden2, hidden3, hidden4, activation, lr, weight_decay):
+def run_mlp_classification(hidden1, hidden2, hidden3, hidden4, activation, lr, weight_decay, epoch):
     # Load CIFAR-10 dataset from OpenML
     X_train, y_train, X_val, y_val = load_openml_cifar10()
 
@@ -108,7 +110,7 @@ def run_mlp_classification(hidden1, hidden2, hidden3, hidden4, activation, lr, w
 
     # Train model
     model.train()
-    for epoch in range(3):  # Small number of epochs for optimization speed
+    for epoch in range(epoch):  # Small number of epochs for optimization speed
         for x_batch, y_batch in train_loader:
             x_batch = x_batch.to(device)
             y_batch = y_batch.to(device)
@@ -157,28 +159,44 @@ results_for_plotting = {}  # Dictionary to store results
 for i in range(20):  # Loop for 20 sets of hyperparameters
     print(f"Running {i + 1} set of BO hyperparameters")
     
-    # Randomly sample hyperparameter indices
-    hyper = [random.randint(0, 2) for _ in range(7)]  # Generate 7 random indices for hyperparameters
-    print(f"Selected hyperparameter indices: {hyper}")
-
+    # Randomly sample hyperparameter indices and retrieve their corresponding values
+    hyper_indices = [random.randint(0, 2) for _ in range(7)]  # Generate 7 random indices for hyperparameters
+    hyper_values = [
+        hyperparameters["MLP_hidden1_nu"][hyper_indices[0]],
+        hyperparameters["MLP_hidden2_nu"][hyper_indices[1]],
+        hyperparameters["MLP_hidden3_nu"][hyper_indices[2]],
+        hyperparameters["MLP_hidden4_nu"][hyper_indices[3]],
+        hyperparameters["MLP_lr_nu"][hyper_indices[4]],
+        hyperparameters["MLP_activation_nu"][hyper_indices[5]],
+        hyperparameters["MLP_weight_decay_nu"][hyper_indices[6]],
+    ]
+    
+    print(f"Selected hyperparameter values: {hyper_values}")
+    
     # Run the optimization for the selected hyperparameters
     accuracies, best_y, best_candidate = optimiser.optimise(
         code_str=code_str,
-        MLP_hidden1_nu=hyperparameters["MLP_hidden1_nu"][hyper[0]],
-        MLP_hidden2_nu=hyperparameters["MLP_hidden2_nu"][hyper[1]],
-        MLP_hidden3_nu=hyperparameters["MLP_hidden3_nu"][hyper[2]],
-        MLP_hidden4_nu=hyperparameters["MLP_hidden4_nu"][hyper[3]],
-        MLP_lr_nu=hyperparameters["MLP_lr_nu"][hyper[4]],
-        MLP_activation_nu=hyperparameters["MLP_activation_nu"][hyper[5]],
-        MLP_weight_decay_nu=hyperparameters["MLP_weight_decay_nu"][hyper[6]],
+        MLP_hidden1_nu=hyper_values[0],
+        MLP_hidden2_nu=hyper_values[1],
+        MLP_hidden3_nu=hyper_values[2],
+        MLP_hidden4_nu=hyper_values[3],
+        MLP_lr_nu=hyper_values[4],
+        MLP_activation_nu=hyper_values[5],
+        MLP_weight_decay_nu=hyper_values[6],
     )
     
     # Store results for plotting
-    results_for_plotting[tuple(hyper)] = (accuracies, best_y, best_candidate)
+    results_for_plotting[tuple(hyper_values)] = {
+        "accuracies": accuracies,
+        "best_y": best_y,
+        "best_candidate": best_candidate.tolist() if isinstance(best_candidate, torch.Tensor) else best_candidate,
+    }
     print(f"Best Y: {best_y}, Best Candidate: {best_candidate}")
 
+# Export results to a JSON file
+output_file = "bo_results.json"
+with open(output_file, "w") as f:
+    json.dump(results_for_plotting, f, indent=4)
 
-
-
-    
+print(f"Results saved to {output_file}")
 

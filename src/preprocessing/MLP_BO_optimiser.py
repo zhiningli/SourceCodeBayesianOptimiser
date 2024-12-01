@@ -31,13 +31,16 @@ class MLP_BO_Optimiser:
         self.params = None
         self.objective_func = None
         self.search_space = {
-            'hidden1': [32, 64, 128],
-            'hidden2': [32, 64, 128],
-            'hidden3': [32, 64, 128],
-            'hidden4': [32, 64, 128],
-            'activation': ['ReLU','Tanh','LeakyReLu'],
+            'conv_kernel_size': [3, 5, 7],
+            'conv_stride': [1, 2],
+            'max_pool_kernel_size': [1, 3],
+            'max_pool_stride': [1, 2],
+            'hidden': [128, 512, 1024],
+            'activation': ['ReLU','Tanh','LeakyReLU'],
             'lr': [0.0001, 0.001, 0.01],
-            'weight_decay': [0.0, 0.0001, 0.001]
+            'weight_decay': [0.0, 0.0001, 0.001],
+            'epoch': [5, 10, 15],
+            'batch_size': [64, 128]
         }
         self.last_error = None
 
@@ -49,6 +52,7 @@ class MLP_BO_Optimiser:
                 MLP_lr_nu: float,
                 MLP_activation_nu: float,
                 MLP_weight_decay_nu: float,
+                MLP_epoch_nu: float,
                 sample_per_batch=1,
                 n_iter=20, 
                 initial_points=10,):
@@ -80,7 +84,7 @@ class MLP_BO_Optimiser:
         """
         A thin wrapper to map input tensor to hyperparameters for MLP
         """
-        np_params = x.detach().numpy()
+        np_params = x.detach().numpy().squeeze()
         params = {
             'hidden1': self.search_space['hidden1'][int(np_params[0])],
             'hidden2': self.search_space['hidden2'][int(np_params[1])],
@@ -115,7 +119,7 @@ class MLP_BO_Optimiser:
             [3, 3, 3, 3, 2, 2, 2]   
         ], dtype=torch.float)
 
-        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7]
+        discrete_dims = [0, 1, 2, 3, 4, 5, 6]
         discrete_values = {
             0: [0, 1, 2],
             1: [0, 1, 2],
@@ -125,13 +129,11 @@ class MLP_BO_Optimiser:
             5: [0, 1, 2],
             6: [0, 1, 2],
         }
-
+        print("Running bayesian optimisation...")
         train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
-        train_y = torch.tensor([self._botorch_objective(x).item for x in train_x])
-        train_y = standardize(train_y)
-
+        print("Running objective function for 10 initial points...")
+        train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float).view(-1, 1)
         likelihood = GaussianLikelihood().to(torch.float64)
-
         gp = (MLP_GP_model(MLP_hidden1_nu = MLP_hidden1_nu, 
                            MLP_hidden2_nu = MLP_hidden2_nu,
                            MLP_hidden3_nu = MLP_hidden3_nu, 
@@ -142,15 +144,12 @@ class MLP_BO_Optimiser:
                            train_X=train_x, train_Y=train_y, likelihood=likelihood
                           ).to(torch.float64))
         
-
         mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
         fit_gpytorch_mll_torch(mll)
-
-        ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
+        ei = UpperConfidenceBound(model=gp, beta = 0.2)
         best_candidate = None
         best_y = float('-inf')
         accuracies = []
-
         with tqdm(total=n_iter, desc="Bayesian Optimization Progress", unit="iter") as pbar:
             for i in range(n_iter):
                 initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
@@ -175,11 +174,10 @@ class MLP_BO_Optimiser:
                 train_y = train_y.view(-1)
 
                 gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
-                ei = UpperConfidenceBound(model=gp, best_f=train_y.max())
-
+                ei = UpperConfidenceBound(model=gp, beta = 0.2)
                 # Update progress bar
-                pbar.set_postfix({"Best Y": best_y})
-                pbar.update(1)
+                pbar.set_postfix({"Best Y": best_y})  # Dynamically update additional info
+                pbar.update(1)  # Increment progress bar by 1
 
         return accuracies, best_y, best_candidate
     
