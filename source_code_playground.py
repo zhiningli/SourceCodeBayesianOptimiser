@@ -1,6 +1,7 @@
 from src.preprocessing.MLP_BO_optimiser import MLP_BO_Optimiser
 import random
 import torch
+import numpy as np
 
 code_str = """
 import openml
@@ -156,22 +157,51 @@ def run_mlp_classification(conv_feature_num, hidden1, conv_kernel_size, conv_str
         # Compute validation accuracy
         val_accuracy = correct_val / total_val
 
-        # Print progress
-        print(f"Epoch {ep + 1}/{epoch}: Train Loss = {avg_train_loss:.4f}, Train Acc = {train_accuracy:.4f}, Val Acc = {val_accuracy:.4f}")
-
     # Return final validation accuracy
     return val_accuracy
 
 
 """
+search_space = {
+    'conv_feature_num': [8, 16, 32, 64],
+    'conv_kernel_size': [3, 5, 7],
+    'conv_stride': [1, 2],
+    'hidden1': [64, 128, 256, 512, 1024],
+    'lr': [0.0001, 0.0001, 0.001, 0.01],
+    'activation': ['ReLU','Tanh','LeakyReLU'],
+    'weight_decay': [0.0, 0.1, 0.01, 0.0001, 0.001],
+    'epoch': [5, 7, 10, 12, 15, 18, 25, 30, 35],
+    'batch_size': [64, 128]
+}
+
+
 
 
 optimiser = MLP_BO_Optimiser()
 
 results_for_plotting = {}
+for i in range(5):
+    accuracies, best_y, best_candidate = optimiser.optimise(code_str= code_str)
+    # Convert best_candidate to a Python list if it's a tensor or NumPy array
+    best_candidate = best_candidate.view(-1).long().tolist()
 
-optimiser.optimise(code_str= code_str)
+    # Map best_candidate to hyperparameter values in search_space
+    best_candidate_dict = {key: values[best_candidate[i]] for i, (key, values) in enumerate(search_space.items())}
 
+    # Combine all results for storage
+    results_for_plotting[i] = {
+        'accuracies': accuracies,
+        'best_y': best_y,
+        'best_candidate': best_candidate_dict
+    }
+
+
+
+output_file = "bo_results.txt"
+with open(output_file, "w") as f:
+    f.write(repr(results_for_plotting))
+
+print(f"Results saved to {output_file}")
 
 # hyperparameters = {
 #     "MLP_conv_features_num": [0.5, 1.5, 2.5],

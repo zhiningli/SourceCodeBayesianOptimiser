@@ -1,6 +1,5 @@
 import torch
 from torch import Tensor
-from torch import nn
 from botorch.utils.transforms import standardize
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from botorch.models import SingleTaskGP
@@ -25,7 +24,8 @@ from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.utils.grid import scale_to_bounds
 from tqdm import tqdm
-
+from botorch.optim.optimize import optimize_acqf_discrete
+from itertools import product
 
 class MLP_BO_Optimiser:
 
@@ -33,22 +33,22 @@ class MLP_BO_Optimiser:
         self.params = None
         self.objective_func = None
         self.search_space = {
-            'conv_feature_num': [8, 16, 32],
+            'conv_feature_num': [8, 16, 32, 64],
             'conv_kernel_size': [3, 5, 7],
             'conv_stride': [1, 2],
-            'hidden1': [128, 256, 512],
+            'hidden1': [64, 128, 256, 512, 1024],
+            'lr': [0.0001, 0.0001, 0.001, 0.01],
             'activation': ['ReLU','Tanh','LeakyReLU'],
-            'lr': [0.0001, 0.001, 0.01],
-            'weight_decay': [0.0, 0.0001, 0.001],
-            'epoch': [15, 25, 35],
+            'weight_decay': [0.0, 0.1, 0.01, 0.0001, 0.001],
+            'epoch': [5, 7, 10, 12, 15, 18, 25, 30, 35],
             'batch_size': [64, 128]
         }
         self.last_error = None
 
     def optimise(self, code_str, 
                 sample_per_batch=1,
-                n_iter=20, 
-                initial_points=50,):
+                n_iter=25, 
+                initial_points=2,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.
@@ -70,7 +70,7 @@ class MLP_BO_Optimiser:
         """
         A thin wrapper to map input tensor to hyperparameters for MLP
         """
-        np_params = x.detach().numpy().squeeze()
+        np_params = x.detach().cpu().numpy().squeeze()
         params = {
             'conv_feature_num': self.search_space['conv_feature_num'][int(np_params[0])],
             'conv_kernel_size': self.search_space['conv_kernel_size'][int(np_params[1])],
@@ -94,62 +94,85 @@ class MLP_BO_Optimiser:
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
         """
-        torch.manual_seed(42)
         bounds = torch.tensor([
             [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-            [3, 3, 2, 3, 3, 3, 3, 3, 2]   
+            [4, 3, 2, 5, 4, 3, 5, 9, 2]   
         ], dtype=torch.float64)
 
-        discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        # discrete_dims = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         discrete_values = {
-            0: [0, 1, 2],
+            0: [0, 1, 2, 3],
             1: [0, 1, 2],
             2: [0, 1],
-            3: [0, 1, 2],
-            4: [0, 1, 2],
+            3: [0, 1, 2, 3, 4],
+            4: [0, 1, 2, 3],
             5: [0, 1, 2],
-            6: [0, 1, 2],
-            7: [0, 1, 2],
+            6: [0, 1, 2, 3 ,4],
+            7: [0, 1, 2, 3, 4,5 ,6, 7, 8],
             8: [0, 1],
         }
+
+        choices = torch.tensor(list(product(*[range(len(self.search_space[dim])) for dim in self.search_space])), dtype=torch.float64)
+
+
         print("Running bayesian optimisation...")
-        train_x = torch.rand((initial_points, bounds.size(1))) * (bounds[1] - bounds[0]) + bounds[0]
-        print("Running objective function for 10 initial points...")
+
+        train_x = draw_sobol_samples(bounds=bounds, n=initial_points, q=sample_per_batch).squeeze(1)
         train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float64).view(-1, 1)
+
+        if torch.cuda.is_available():
+            train_x = train_x.cuda()
+            train_y = train_y.cuda()
+            choices = choices.cuda()
+            
         likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (MLP_GP_DKL(
-            train_x= train_x,
-            train_y= train_y,
+        gp = (SingleTaskGP(
+            train_X = train_x,
+            train_Y= train_y,
             likelihood=likelihood,
         ).to(torch.float64))
 
-        if torch.cuda.is_available:
+        if torch.cuda.is_available():
+
             likelihood = likelihood.cuda()
             gp = gp.cuda()
-        
+
         mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
         fit_gpytorch_mll_torch(mll)
-        ei = UpperConfidenceBound(model=gp, beta = 0.2)
+        acq_function = UpperConfidenceBound(model=gp, beta = 0.5)
         best_candidate = None
         best_y = float('-inf')
         accuracies = []
         with tqdm(total=n_iter, desc="Bayesian Optimization Progress", unit="iter") as pbar:
             for i in range(n_iter):
-                initial_conditions = draw_sobol_samples(bounds=bounds, n=1, q=sample_per_batch).squeeze(1).to(dtype=torch.float64)
                 
-                candidate, acq_value = self._optimize_acqf_with_discrete_search_space(
-                    initial_conditions=initial_conditions,
-                    acquisition_function=ei,
-                    bounds=bounds,
-                    discrete_dims=discrete_dims,
-                    discrete_values=discrete_values
+                candidate, acq_value = optimize_acqf_discrete(
+                    acq_function=acq_function,
+                    q=1,
+                    choices=choices,
+                    max_batch_size=2048,  # Adjust based on memory availability
+                    unique=True 
                 )
                 
+                if torch.cuda.is_available():
+                    candidate = candidate.cuda()
                 train_y = train_y.view(-1, 1)
                 new_y = self._botorch_objective(candidate).view(1, 1)
                 new_y_value = new_y.item()
+
+
+                if new_y_value >= best_y:
+                    print(candidate)
+                    best_y = new_y_value
+                    best_candidate = candidate
+
+                # Ensure tensors are on the same device before concatenating
+                if torch.cuda.is_available():
+                    new_y = new_y.cuda()
+
                 accuracies.append(new_y_value)
                 if new_y_value >= best_y:
+                    print(candidate)
                     best_y = new_y_value 
                     best_candidate = candidate 
                 train_x = torch.cat([train_x, candidate.view(1, -1)])
@@ -157,8 +180,7 @@ class MLP_BO_Optimiser:
                 train_y = train_y.view(-1)
 
                 gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
-                ei = UpperConfidenceBound(model=gp, beta = 0.2)
-                # Update progress bar
+                acq_function = UpperConfidenceBound(model=gp, beta = 0.3)
                 pbar.set_postfix({"Best Y": best_y})  # Dynamically update additional info
                 pbar.update(1)  # Increment progress bar by 1
 
@@ -415,9 +437,9 @@ class DKL(torch.nn.Sequential):
     def __init__(self):
         super(DKL, self).__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(10, 20),
+            torch.nn.Linear(9, 9),
             torch.nn.ReLU(),
-            torch.nn.Linear(20, 10)
+            torch.nn.Linear(9, 9)
         )
 
 
@@ -437,4 +459,8 @@ class MLP_GP_DKL(SingleTaskGP):
         transformed_x = scale_to_bounds(self.DKL(x), -1., 1.)
         mean_x = self.mean_module(transformed_x)
         covar_x = self.covar_module(transformed_x)
+        print("Mean:", mean_x)
+        print("Covariance Matrix Norm:", covar_x.evaluate().norm().item())
+        print("Lengthscale:", self.covar_module.base_kernel.lengthscale)
+        print("Outputscale:", self.covar_module.outputscale)
         return MultivariateNormal(mean_x, covar_x)

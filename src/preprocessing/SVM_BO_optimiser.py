@@ -13,6 +13,7 @@ from gpytorch.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 
+from botorch.optim import optimize_acqf_discrete
 from botorch.models import SingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
