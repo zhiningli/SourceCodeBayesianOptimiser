@@ -162,95 +162,78 @@ def run_mlp_classification(conv_feature_num, hidden1, conv_kernel_size, conv_str
 
 
 """
+
 search_space = {
-        "MLP_conv_feature_num_nu" : float,
-        "MLP_conv_kernel_size_nu" : float,
-        "MLP_conv_stride_nu" : float,
-        "MLP_hidden1_nu": float,
-        "MLP_lr_nu": float,
-        "MLP_activation_nu": float,
-        "MLP_weight_decay_nu": float,
-        "MLP_epoch_nu" : float,
-        "MLP_batch_size_nu" : float,
+    "MLP_conv_feature_num_nu": [0.5, 1.5, 2.5],
+    "MLP_conv_kernel_size_nu": [0.5, 1.5, 2.5],
+    "MLP_conv_stride_nu": [0.5, 1.5, 2.5],
+    "MLP_hidden1_nu": [0.5, 1.5, 2.5],
+    "MLP_lr_nu": [0.5, 1.5, 2.5],
+    "MLP_activation_nu": [0.5, 1.5, 2.5],
+    "MLP_weight_decay_nu": [0.5, 1.5, 2.5],
+    "MLP_epoch_nu": [0.5, 1.5, 2.5],
+    "MLP_batch_size_nu": [0.5, 1.5, 2.5],
 }
 
+results_for_plotting = {
+    'descrpt': "BO results after selecting different nu for matern kernel in different input dimensions",
+    'experiments': []
+}
 
-optimiser = MLP_BO_Optimiser()
+# Run experiments
+for _ in range(5):
+    random_idx = [random.randint(0, 2) for _ in range(9)]
+    print(random_idx)
 
-results_for_plotting = {}
-for i in range(10):
-    accuracies, best_y, best_candidate = optimiser.optimise(code_str= code_str)
-    # Convert best_candidate to a Python list if it's a tensor or NumPy array
-    best_candidate = best_candidate.view(-1).long().tolist()
+    # Get the hyperparameter values
+    random_values = [
+        search_space["MLP_conv_feature_num_nu"][random_idx[0]],
+        search_space["MLP_conv_kernel_size_nu"][random_idx[1]],
+        search_space["MLP_conv_stride_nu"][random_idx[2]],
+        search_space["MLP_hidden1_nu"][random_idx[3]],
+        search_space["MLP_lr_nu"][random_idx[4]],
+        search_space["MLP_activation_nu"][random_idx[5]],
+        search_space["MLP_weight_decay_nu"][random_idx[6]],
+        search_space["MLP_epoch_nu"][random_idx[7]],
+        search_space["MLP_batch_size_nu"][random_idx[8]],
+    ]
 
-    # Map best_candidate to hyperparameter values in search_space
-    best_candidate_dict = {key: values[best_candidate[i]] for i, (key, values) in enumerate(search_space.items())}
+    optimiser = MLP_BO_Optimiser()
 
-    # Combine all results for storage
-    results_for_plotting[i] = {
-        'accuracies': accuracies,
-        'best_y': best_y,
-        'best_candidate': best_candidate_dict
-    }
+    experiment_results = []
+    for i in range(3):  # Run 3 experiments for the same configuration
+        accuracies, best_y, best_candidate = optimiser.optimise(
+            code_str=code_str,
+            MLP_conv_feature_num_nu=random_values[0],
+            MLP_conv_kernel_size_nu=random_values[1],
+            MLP_conv_stride_nu=random_values[2],
+            MLP_hidden1_nu=random_values[3],
+            MLP_lr_nu=random_values[4],
+            MLP_activation_nu=random_values[5],
+            MLP_weight_decay_nu=random_values[6],
+            MLP_epoch_nu=random_values[7],
+            MLP_batch_size_nu=random_values[8],
+        )
 
+        print(f"Run {i + 1}: accuracies={accuracies}, best_y={best_y}, best_candidate={best_candidate}")
 
+        experiment_results.append({
+            'run': i + 1,
+            'accuracies': accuracies,
+            'best_y': best_y,
+            'best_candidate': best_candidate
+        })
 
+    # Store results for this hyperparameter configuration
+    results_for_plotting['experiments'].append({
+        'hyperparameters': random_values,
+        'random_idx': random_idx,
+        'results': experiment_results
+    })
+
+# Save results to a file
 output_file = "bo_results.txt"
 with open(output_file, "w") as f:
     f.write(repr(results_for_plotting))
 
 print(f"Results saved to {output_file}")
-
-# hyperparameters = {
-#     "MLP_conv_features_num": [0.5, 1.5, 2.5],
-#     "MLP_conv_kernel_size": [0.5, 1.5, 2.5],
-#     "MLP_conv_stride": [0.5, 1.5, 2.5],
-#     "MLP_hidden1_nu": [0.5, 1.5, 2.5],
-#     "MLP_hidden2_nu": [0.5, 1.5, 2.5],
-#     "MLP_lr_nu": [0.5, 1.5, 2.5],
-#     "MLP_activation_nu": [0.5, 1.5, 2.5],
-#     "MLP_weight_decay_nu": [0.5, 1.5, 2.5],
-#     "MLP_weight_epoch_nu": [0.5, 1.5, 2.5],
-#     "MLP_weight_batch_nu": [0.5, 1.5, 2.5]
-# }
-
-
-# for i in range(5):  # Loop for 20 sets of hyperparameters
-#     print(f"Running {i + 1} set of BO hyperparameters")
-    
-    # # Randomly sample hyperparameter indices and retrieve their corresponding values
-    # hyper_indices = [random.randint(0, 2) for _ in range(10)]  # Generate 7 random indices for hyperparameters
-    # hyper_values = [
-    #     hyperparameters["MLP_conv_features_num"][hyper_indices[0]],
-    #     hyperparameters["MLP_conv_kernel_size"][hyper_indices[1]],
-    #     hyperparameters["MLP_conv_stride"][hyper_indices[2]],
-    #     hyperparameters["MLP_hidden1_nu"][hyper_indices[3]],
-    #     hyperparameters["MLP_hidden2_nu"][hyper_indices[4]],
-    #     hyperparameters["MLP_lr_nu"][hyper_indices[5]],
-    #     hyperparameters["MLP_activation_nu"][hyper_indices[6]],
-    #     hyperparameters["MLP_weight_decay_nu"][hyper_indices[7]],
-    #     hyperparameters["MLP_weight_epoch_nu"][hyper_indices[8]],
-    #     hyperparameters["MLP_weight_batch_nu"][hyper_indices[9]],
-    # ]
-    
-    # print(f"Selected hyperparameter values: {hyper_values}")
-    
-    # # Run the optimization for the selected hyperparameters
-    # accuracies, best_y, best_candidate = optimiser.optimise(
-    #     code_str=code_str
-    # )
-    
-    # # Store results for plotting
-    # results_for_plotting[tuple(hyper_values)] = {
-    #     "accuracies": accuracies,
-    #     "best_y": best_y,
-    #     "best_candidate": best_candidate.tolist() if isinstance(best_candidate, torch.Tensor) else best_candidate,
-    # }
-    # print(f"Best Y: {best_y}, Best Candidate: {best_candidate}")
-
-output_file = "bo_results.txt"
-with open(output_file, "w") as f:
-    f.write(repr(results_for_plotting))
-
-print(f"Results saved to {output_file}")
-

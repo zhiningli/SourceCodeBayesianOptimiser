@@ -174,9 +174,6 @@ search_space = {
     'batch_size': [64, 128]
 }
 
-
-
-
 optimiser = MLP_BO_Optimiser()
 
 results_for_plotting = {}

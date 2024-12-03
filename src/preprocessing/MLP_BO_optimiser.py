@@ -46,6 +46,15 @@ class MLP_BO_Optimiser:
         self.last_error = None
 
     def optimise(self, code_str, 
+                    MLP_conv_feature_num_nu : float,
+                    MLP_conv_kernel_size_nu : float,
+                    MLP_conv_stride_nu : float,
+                    MLP_hidden1_nu: float,
+                    MLP_lr_nu: float,
+                    MLP_activation_nu: float,
+                    MLP_weight_decay_nu: float,
+                    MLP_epoch_nu : float,
+                    MLP_batch_size_nu : float,
                 sample_per_batch=1,
                 n_iter=25, 
                 initial_points=2,):
@@ -62,9 +71,19 @@ class MLP_BO_Optimiser:
         if not callable(self.objective_func):
             raise ValueError("The code string must define a callable function")
         
-        return self._run_bayesian_optimisation(n_iter=n_iter, 
-                                                initial_points = initial_points,
-                                                sample_per_batch= sample_per_batch)
+        return self._run_bayesian_optimisation(
+                                        MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
+                                        MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
+                                        MLP_conv_stride_nu = MLP_conv_stride_nu,
+                                        MLP_hidden1_nu = MLP_hidden1_nu,
+                                        MLP_lr_nu = MLP_lr_nu,
+                                        MLP_activation_nu = MLP_activation_nu,
+                                        MLP_weight_decay_nu = MLP_weight_decay_nu,
+                                        MLP_epoch_nu = MLP_epoch_nu,
+                                        MLP_batch_size_nu = MLP_batch_size_nu,
+                                        n_iter=n_iter, 
+                                        initial_points = initial_points,
+                                        sample_per_batch= sample_per_batch)
 
     def _botorch_objective(self, x):
         """
@@ -89,7 +108,16 @@ class MLP_BO_Optimiser:
     def _run_bayesian_optimisation(self, 
                                     n_iter,
                                     initial_points,
-                                    sample_per_batch: float
+                                    sample_per_batch,
+                                    MLP_conv_feature_num_nu,
+                                    MLP_conv_kernel_size_nu,
+                                    MLP_conv_stride_nu,
+                                    MLP_hidden1_nu,
+                                    MLP_lr_nu,
+                                    MLP_activation_nu,
+                                    MLP_weight_decay_nu,
+                                    MLP_epoch_nu,
+                                    MLP_batch_size_nu,
                                    ):
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
@@ -124,9 +152,18 @@ class MLP_BO_Optimiser:
             train_x = train_x.cuda()
             train_y = train_y.cuda()
             choices = choices.cuda()
-            
+
         likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (SingleTaskGP(
+        gp = (MLP_GP_model(
+            MLP_conv_feature_num_nu = MLP_conv_feature_num_nu,
+            MLP_conv_kernel_size_nu = MLP_conv_kernel_size_nu,
+            MLP_conv_stride_nu = MLP_conv_stride_nu,
+            MLP_hidden1_nu = MLP_hidden1_nu,
+            MLP_lr_nu = MLP_lr_nu,
+            MLP_activation_nu = MLP_activation_nu,
+            MLP_weight_decay_nu = MLP_weight_decay_nu,
+            MLP_epoch_nu = MLP_epoch_nu,
+            MLP_batch_size_nu = MLP_batch_size_nu,
             train_X = train_x,
             train_Y= train_y,
             likelihood=likelihood,
@@ -162,7 +199,6 @@ class MLP_BO_Optimiser:
 
 
                 if new_y_value >= best_y:
-                    print(candidate)
                     best_y = new_y_value
                     best_candidate = candidate
 
@@ -172,7 +208,6 @@ class MLP_BO_Optimiser:
 
                 accuracies.append(new_y_value)
                 if new_y_value >= best_y:
-                    print(candidate)
                     best_y = new_y_value 
                     best_candidate = candidate 
                 train_x = torch.cat([train_x, candidate.view(1, -1)])
@@ -231,7 +266,6 @@ class MLP_GP_model(SingleTaskGP):
         MLP_conv_kernel_size_nu : float,
         MLP_conv_stride_nu : float,
         MLP_hidden1_nu: float,
-        MLP_hidden2_nu: float,
         MLP_lr_nu: float,
         MLP_activation_nu: float,
         MLP_weight_decay_nu: float,
@@ -265,12 +299,6 @@ class MLP_GP_model(SingleTaskGP):
         matern_kernel_for_hidden1 = ScaleKernel(
             MaternKernel(
                 nu = MLP_hidden1_nu,
-            )
-        )
-
-        matern_kernel_for_hidden2 = ScaleKernel(
-            MaternKernel(
-                nu = MLP_hidden2_nu,
             )
         )
 
@@ -309,7 +337,6 @@ class MLP_GP_model(SingleTaskGP):
                         matern_kernel_for_conv_kernel_size *
                         matern_kernel_for_conv_stride *
                         matern_kernel_for_hidden1 * 
-                        matern_kernel_for_hidden2 * 
                         matern_kernel_for_lr * 
                         matern_kernel_for_activation * 
                         matern_kernel_for_weight_decay * 
