@@ -72,15 +72,12 @@ class Optimiser:
         Returns:
         np.ndarray: An array of candidate points.
         """
-        n_uniform = n_total // 3  # Number of uniformly sampled points
-        n_near_best = n_total - n_uniform  # Number of points near the best candidate
+        n_uniform = n_total // 3
+        n_near_best = n_total - n_uniform
 
         lower_bounds = np.array([b[0] for b in bounds])
         upper_bounds = np.array([b[1] for b in bounds])
         uniform_samples = np.random.uniform(lower_bounds, upper_bounds, (n_uniform, len(bounds)))
-        # Generate uniform random samples within the bounds
-
-        # Identify the best point from the training data
         best_idx = np.argmin(y)
         best_point = X[best_idx]
 
@@ -88,10 +85,8 @@ class Optimiser:
         noise_scale = 0.05 * np.abs(np.array([b[1] - b[0] for b in bounds]))
         near_best_samples = np.array([np.random.normal(best_point[i], noise_scale[i], n_near_best) for i in range(len(bounds))]).T
         print("Best point is: ", best_point)
-        # Combine the uniform and near-best samples
         candidates = np.vstack([uniform_samples, near_best_samples])
 
-        # Ensure that all generated candidate points fall within the bounds
         candidates = np.clip(candidates, lower_bounds, upper_bounds)
 
         return candidates
