@@ -150,7 +150,11 @@ def run_mlp_classification(conv_feature_num, hidden1, conv_kernel_size, conv_str
                 y_batch = y_batch.to(device)
 
                 output = model(x_batch)
+        
+
+                # Predicted class is the one with the highest probability
                 _, predicted = torch.max(output, 1)
+
                 total_val += y_batch.size(0)
                 correct_val += (predicted == y_batch).sum().item()
 
@@ -181,7 +185,7 @@ results_for_plotting = {
 }
 
 # Run experiments
-for _ in range(5):
+for _ in range(1):
     random_idx = [random.randint(0, 2) for _ in range(9)]
     print(random_idx)
 
@@ -201,7 +205,7 @@ for _ in range(5):
     optimiser = MLP_BO_Optimiser()
 
     experiment_results = []
-    for i in range(3):  # Run 3 experiments for the same configuration
+    for i in range(5):  # Run 3 experiments for the same configuration
         accuracies, best_y, best_candidate = optimiser.optimise(
             code_str=code_str,
             MLP_conv_feature_num_nu=random_values[0],

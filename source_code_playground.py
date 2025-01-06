@@ -140,7 +140,6 @@ def run_mlp_classification(conv_feature_num, hidden1, conv_kernel_size, conv_str
         avg_train_loss = running_loss / len(train_loader)
         train_accuracy = correct_train / total_train
 
-        # Validation loop
         model.eval()
         correct_val = 0
         total_val = 0
@@ -150,11 +149,13 @@ def run_mlp_classification(conv_feature_num, hidden1, conv_kernel_size, conv_str
                 y_batch = y_batch.to(device)
 
                 output = model(x_batch)
+
+                # Predicted class is the one with the highest probability
                 _, predicted = torch.max(output, 1)
+
                 total_val += y_batch.size(0)
                 correct_val += (predicted == y_batch).sum().item()
 
-        # Compute validation accuracy
         val_accuracy = correct_val / total_val
 
     # Return final validation accuracy
