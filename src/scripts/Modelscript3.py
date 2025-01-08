@@ -1,4 +1,3 @@
-test_script = """
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -17,7 +16,6 @@ X, y = make_classification(
     flip_y=0.1,              # Introduce noise in labels
     random_state=42          # Random state for reproducibility
 )
-
 # Convert to PyTorch tensors
 X = torch.tensor(X, dtype=torch.float32)
 y = torch.tensor(y, dtype=torch.long)
@@ -27,30 +25,17 @@ train_dataset = TensorDataset(X, y)
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(train_dataset, batch_size=32, shuffle=False)  # Reusing the same dataset for simplicity
 
+# Define a simple feedforward model for the structured dataset
 class SimpleNN(nn.Module):
     def __init__(self, input_size, num_classes):
         super(SimpleNN, self).__init__()
-        
-        # Reshape the input to (batch_size, 1, input_size) for Conv1d
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(32 * (input_size // 2), 128)  # Adjust for the reduced dimension after pooling
+        self.fc1 = nn.Linear(input_size, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, num_classes)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.5)  # Add regularization with dropout
 
     def forward(self, x):
-        # Add a channel dimension for Conv1d (batch_size, 1, input_size)
-        x = x.unsqueeze(1)
-        x = self.relu(self.conv1(x))
-        x = self.pool(self.relu(self.conv2(x)))
-        
-        # Flatten for fully connected layers
-        x = x.view(x.size(0), -1)
         x = self.relu(self.fc1(x))
-        x = self.dropout(x)  # Apply dropout
         x = self.relu(self.fc2(x))
         x = self.fc3(x)
         return x
@@ -75,6 +60,7 @@ def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
             optimizer.step()
 
             running_loss += loss.item()
+
     # Testing the model
     model.eval()
     correct = 0
@@ -89,32 +75,3 @@ def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
     accuracy = 100 * correct / total
     print(f"Test Accuracy: {accuracy:.2f}%")
     return accuracy
-
-
-"""
-
-from src.newIdeas.bo_optimiser import MLP_BO_Optimiser
-import numpy as np
-
-optimiser = MLP_BO_Optimiser()
-
-search_space = {
-    'learning_rate': np.logspace(-5, -1, num=50).tolist(),  # Logarithmically spaced values
-    'momentum': [0.01 * x for x in range(100)],  # Linear space
-    'weight_decay': [0.0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
-    'num_epochs': [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90],
-}
-
-accuracies, best_y, best_candidate = optimiser.optimise(code_str=test_script, search_space=search_space, objective_function_name="train_simple_nn", initial_points=10, n_iter=50)
-
-# train_simple_nn(
-#     learning_rate=0.02, 
-#     momentum=0.9, 
-#     batch_size=32, 
-#     weight_decay=1e-3, 
-#     num_epochs=50
-# )
-
-print("best_hyperparameter configuration: ", best_candidate)
-print("best y so far: ", best_y)
-print("accuracies: ", accuracies)

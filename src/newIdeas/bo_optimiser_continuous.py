@@ -19,7 +19,7 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from tqdm import tqdm
-from botorch.optim.optimize import optimize_acqf_discrete
+from botorch.optim.optimize import optimize_acqf
 from itertools import product
 
 class MLP_BO_Optimiser:
@@ -28,11 +28,8 @@ class MLP_BO_Optimiser:
         self.params = None
         self.objective_func = None
         self.last_error = None
-        self.search_space = None
-        self.bounds = None
 
     def optimise(self, code_str, 
-                    search_space: Tensor,
                     objective_function_name: str,
                     sample_per_batch=1,
                     n_iter=25, 
@@ -43,11 +40,6 @@ class MLP_BO_Optimiser:
         :param n_iter: Number of optimization iterations.
         :param initial_points: Number of initial random samples.
         """
-        self.search_space = search_space
-        self.bounds = torch.Tensor([
-    [0, 0, 0, 0],
-    [len(self.search_space['learning_rate'])-1, len(self.search_space['momentum'])-1, len(self.search_space['weight_decay'])-1, len(self.search_space['num_epochs'])-1]
-], )
         namespace = {}
         exec(code_str, namespace)
         self.objective_func = namespace.get(objective_function_name)
@@ -65,10 +57,10 @@ class MLP_BO_Optimiser:
         """
         np_params = x.detach().cpu().numpy().squeeze()
         params = {
-            "learning_rate": self.search_space["learning_rate"][int(np_params[0])],
-            "momentum": self.search_space["momentum"][int(np_params[1])],
-            "weight_decay": self.search_space["weight_decay"][int(np_params[2])],
-            "num_epochs": self.search_space["num_epochs"][int(np_params[3])]
+            "learning_rate": np_params[0],
+            "momentum": np_params[1],
+            "weight_decay": np_params[2],
+            "num_epochs": 50,
         }
 
         print("current X: ", params)
@@ -87,91 +79,71 @@ class MLP_BO_Optimiser:
         return data * (upper_bounds - lower_bounds) + lower_bounds
 
 
-    def _run_bayesian_optimisation(self, 
-                                    n_iter,
-                                    initial_points,
-                                    sample_per_batch,
-                                   ):
-        r"""
+    def _run_bayesian_optimisation(self, n_iter, initial_points, sample_per_batch):
+        """
         Run Bayesian Optimisation for hyperparameter tuning
         """
-        bounds = self.bounds
+        # Define bounds in normalized space [0, 1]
+        bounds = torch.Tensor([[0, 0, 0], [1, 1, 0.1]])
         if torch.cuda.is_available():
-            bounds = self.bounds.cuda()
+            bounds = bounds.cuda()
 
-        train_x = draw_sobol_samples(bounds=bounds, n=initial_points, q=sample_per_batch).squeeze(1).cuda()
-        train_x = train_x.to(torch.float64)
+        # Generate initial Sobol samples
+        train_x = draw_sobol_samples(bounds=bounds, n=initial_points, q=sample_per_batch).squeeze(1).to(torch.float64)
         train_y = torch.tensor([self._botorch_objective(x).item() for x in train_x], dtype=torch.float64).view(-1, 1)
 
-        normalised_train_x = self._normalize_to_unit_cube(train_x, bounds)
-
-        choices = torch.tensor(list(product(*[range(len(self.search_space[dim])) for dim in self.search_space])), dtype=torch.float64)
-
-        normalized_choices = choices / torch.tensor(
-            [len(self.search_space[dim]) - 1 for dim in self.search_space],
-            dtype=torch.float64
-        )
-
         if torch.cuda.is_available():
-            normalised_train_x = normalised_train_x.cuda()
+            train_x = train_x.cuda()
             train_y = train_y.cuda()
-            normalized_choices = normalized_choices.cuda()
 
-        likelihood = GaussianLikelihood().to(torch.float64)
-        gp = (SingleTaskGP(
-            train_X = normalised_train_x,
-            train_Y= train_y,
-            likelihood=likelihood,
-        ).to(torch.float64))
+        # Define GP model and fit
+        likelihood = GaussianLikelihood().to(train_x.device, dtype=torch.float64)
+        gp = SingleTaskGP(train_X=train_x, train_Y=train_y, likelihood=likelihood).to(train_x.device, dtype=torch.float64)
 
-        if torch.cuda.is_available():
-            likelihood = likelihood.cuda()
-            gp = gp.cuda()
-
-        mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
+        mll = ExactMarginalLogLikelihood(likelihood, gp)
         fit_gpytorch_mll_torch(mll)
-        acq_function = LogExpectedImprovement(model = gp, best_f=train_y.max())
+
+        # Initialize acquisition function
+        acq_function = LogExpectedImprovement(model=gp, best_f=train_y.max())
 
         best_candidate = None
         best_y = float('-inf')
         accuracies = []
+
         with tqdm(total=n_iter, desc="Bayesian Optimization Progress", unit="iter") as pbar:
             for i in range(n_iter):
-                candidate, acq_value = optimize_acqf_discrete(
+                # Optimize acquisition function
+                candidate, acq_value = optimize_acqf(
                     acq_function=acq_function,
-                    q=1,
-                    choices=normalized_choices, 
-                    max_batch_size=2048,
-                    unique=True
+                    bounds=bounds,
+                    q=1,                # Optimize for one candidate
+                    num_restarts=10,    # Number of random restarts
+                    raw_samples=100,    # Number of raw samples for initialization
                 )
-                
-                # Normalize candidate to evaluate y
-                candidate = self._denormalize_from_unit_cube(candidate, bounds)
-                print("candidates: ", candidate)
-                if torch.cuda.is_available():
-                    candidate = candidate.cuda()
-                
-                new_y = self._botorch_objective(candidate).view(1, 1)
-                new_y = new_y.to(train_y.device)
+
+                # Evaluate the objective at the new candidate
+                new_y = self._botorch_objective(candidate).view(1, 1).to(train_y.device)
                 new_y_value = new_y.item()
 
-                if new_y_value >= best_y:
+                if new_y_value > best_y:
                     best_y = new_y_value
                     best_candidate = candidate
 
-                candidate = self._normalize_to_unit_cube(candidate, bounds)
+                # Update training data
+                train_x = torch.cat([train_x, candidate.view(1, -1)])
 
-                accuracies.append(new_y_value)
-
-                normalised_train_x = torch.cat([normalised_train_x, candidate.view(1, -1)])
-                
                 train_y = train_y.view(-1, 1)
                 train_y = torch.cat([train_y, new_y], dim=0)
                 train_y = train_y.view(-1)
 
-                gp.set_train_data(inputs=normalised_train_x, targets=train_y, strict=False)
-                acq_function = LogExpectedImprovement(model = gp, best_f=train_y.max())
+                # Update the GP model with the new data
+                gp.set_train_data(inputs=train_x, targets=train_y, strict=False)
 
+                # Update acquisition function with new best value
+                acq_function = LogExpectedImprovement(model=gp, best_f=train_y.max())
+
+                accuracies.append(new_y_value)
                 pbar.set_postfix({"Best Y": best_y})
                 pbar.update(1)
+
         return accuracies, best_y, best_candidate
