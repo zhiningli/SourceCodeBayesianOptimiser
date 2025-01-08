@@ -1,4 +1,4 @@
-from src.scripts.datasets.dataset8 import dataset
+from src.scripts.datasets.dataset9 import dataset
 from src.scripts.models.model1 import model
 
 code_str = """
@@ -11,7 +11,7 @@ from sklearn.datasets import make_classification
 """ + dataset + model + """
 def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
     # Initialize model, loss function, and optimizer
-    model = Model(input_size=50, num_classes=3)  # Adjust input size to match your dataset
+    model = Model(input_size=30, num_classes=2)  # Adjust input size to match your dataset
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 

@@ -12,6 +12,6 @@ X8, y8 = make_classification(
 X8 = torch.tensor(X8, dtype=torch.float32)
 y8 = torch.tensor(y8, dtype=torch.long)
 train_dataset = TensorDataset(X8, y8)
-train_loader = DataLoader(train_dataset8, batch_size=16, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 test_loader = DataLoader(train_dataset, batch_size=32, shuffle=False)  # Reusing the same dataset for simplicity
 """
