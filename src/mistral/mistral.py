@@ -5,7 +5,7 @@ import logging
 class MistralClient:
 
     def __init__(self,
-                 api_key: str = "YT6c7Dvr5UTLNpNskkSG66bgUriDlfcZ"):
+                 api_key: str = "VeAZzNp8nazaQjwqsn4GuHmQcS636sZD"):
         self.model = "codestral-mamba-latest"
         self.client = Mistral(api_key=api_key)
         self.models = {

@@ -1,5 +1,6 @@
 from src.mistral.mistral import MistralClient
 from src.data.mistral_prompts.script_extraction_prompt import extract_information_from_script_prompts
+import re
 
 class Source_Code_Parser:
 
@@ -26,11 +27,16 @@ class Source_Code_Parser:
         )
         source_code_information_response = self.mistral.call_codestral(prompt=prompt)
 
-        source_code_information = self.mistral.extract_code_block(source_code_information_response)
-
-        self.extract_model_and_dataset(source_code_information)
-
-        return True
+        return self.extract_model_and_dataset(source_code_information_response)
 
     def extract_model_and_dataset(self, source_code_information):
-        print("response fro mistral: ", source_code_information)
+        # Extract the content inside <model> tags
+        model_match = re.search(r"<model>(.*?)</model>", source_code_information, re.DOTALL)
+        model_code = model_match.group(1).strip() if model_match else "No model found"
+        
+        # Extract the content inside <dataset> tags
+        dataset_match = re.search(r"<dataset>(.*?)</dataset>", source_code_information, re.DOTALL)
+        dataset_code = dataset_match.group(1).strip() if dataset_match else "No dataset found"
+        
+        # Return the extracted code as a dictionary or print them
+        return {"model": model_code, "dataset": dataset_code}
