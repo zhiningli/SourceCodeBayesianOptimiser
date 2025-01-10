@@ -1,7 +1,7 @@
 model = """
 class Model(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(ModerateNN, self).__init__()
+        super(Model, self).__init__()
         self.fc1 = nn.Linear(input_size, 64)
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 16)

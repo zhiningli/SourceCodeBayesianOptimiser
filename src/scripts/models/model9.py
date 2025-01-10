@@ -18,9 +18,9 @@ class BottleneckResidualBlock(nn.Module):
         x += residual  # Skip connection
         return F.relu(x)  # Apply activation to the output
 
-class BottleneckResNet(nn.Module):
+class Model(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(BottleneckResNet, self).__init__()
+        super(Model, self).__init__()
         self.fc1 = nn.Linear(input_size, 256)
         self.res1 = BottleneckResidualBlock(256, 64)
         self.res2 = BottleneckResidualBlock(256, 64)

@@ -2,9 +2,9 @@ model = """
 import torch
 import torch.nn as nn
 
-class SimpleRNN(nn.Module):
+class Model(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(SimpleRNN, self).__init__()
+        super(Model, self).__init__()
         
         # Fixed parameters
         self.hidden_size = 64  # Number of hidden neurons
@@ -17,6 +17,9 @@ class SimpleRNN(nn.Module):
         self.fc = nn.Linear(self.hidden_size, num_classes)
 
     def forward(self, x):
+        # Reshape input to add a sequence length of 1
+        x = x.unsqueeze(1)  # Shape: (batch_size, seq_length=1, input_size)
+        
         # Initialize hidden state (h0) with zeros
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
 
@@ -29,4 +32,5 @@ class SimpleRNN(nn.Module):
         # Pass through the fully connected layer
         out = self.fc(out)
         return out
+
 """

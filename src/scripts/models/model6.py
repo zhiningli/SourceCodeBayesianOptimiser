@@ -1,7 +1,7 @@
 model = """
 class Model(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(ComplexNN, self).__init__()
+        super(Model, self).__init__()
         
         # Define layers
         self.fc1 = nn.Linear(input_size, 256)       # First hidden layer

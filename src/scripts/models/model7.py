@@ -1,7 +1,7 @@
 model = """
 class Model(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(SimpleNN, self).__init__()
+        super(Model, self).__init__()
         self.fc1 = nn.Linear(input_size, 32)  # Hidden layer with 32 neurons
         self.fc2 = nn.Linear(32, num_classes) # Output layer
         self.relu = nn.ReLU()                 # Activation function

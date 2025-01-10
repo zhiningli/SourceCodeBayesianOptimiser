@@ -64,6 +64,7 @@ class MLP_BO_Optimiser:
         A thin wrapper to map input tensor to hyperparameters for MLP
         """
         np_params = x.detach().cpu().numpy().squeeze()
+        print("current Index: ", np_params)
         params = {
             "learning_rate": self.search_space["learning_rate"][int(np_params[0])],
             "momentum": self.search_space["momentum"][int(np_params[1])],
@@ -130,7 +131,7 @@ class MLP_BO_Optimiser:
 
         mll = ExactMarginalLogLikelihood(likelihood, gp).to(torch.float64)
         fit_gpytorch_mll_torch(mll)
-        acq_function = LogExpectedImprovement(model = gp, best_f=train_y.max())
+        acq_function = UpperConfidenceBound(model = gp, beta = 2)
 
         best_candidate = None
         best_y = float('-inf')
@@ -147,7 +148,6 @@ class MLP_BO_Optimiser:
                 
                 # Normalize candidate to evaluate y
                 candidate = self._denormalize_from_unit_cube(candidate, bounds)
-                print("candidates: ", candidate)
                 if torch.cuda.is_available():
                     candidate = candidate.cuda()
                 
@@ -170,7 +170,7 @@ class MLP_BO_Optimiser:
                 train_y = train_y.view(-1)
 
                 gp.set_train_data(inputs=normalised_train_x, targets=train_y, strict=False)
-                acq_function = LogExpectedImprovement(model = gp, best_f=train_y.max())
+                acq_function = UpperConfidenceBound(model = gp, beta = 2)
 
                 pbar.set_postfix({"Best Y": best_y})
                 pbar.update(1)

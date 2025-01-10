@@ -151,3 +151,59 @@ Return your findings as a dictionary within triple backticks for Python, formatt
     "encoding": "<Any encoder used>"
 }}
 """
+
+
+extract_information_from_script_prompts = """
+Your task is to analyze and extract relevant sections from the provided source code.
+<code>
+{source_code}
+</code> 
+Please help me extract the following information:
+
+1. "The section that contains the model architecture"
+2. "The section that contains the dataset information"
+
+Here is an example of how this should be done. Pay attention to ensuring JSON compatibility by using \\ for escape characters and using double quotes "" for property names.
+
+```python
+{{
+    "dataset_name": "iris",
+    "dataset_library": "sklearn",
+    "model_type": "SVM",
+    "model_source": "sklearn",
+    "objective": "classification",
+    "test_size": 0.3,
+    "cross_validation": "train test split",
+    "feature_selection": "principle feature analysis",
+    "hyperparameters": {{
+        "kernel": "poly",
+        "C": 4.229101316230308,
+        "gamma": "scale",
+        "coef0": 0.47320558504355414,
+        "random_state": 42
+    }},
+    "dataset_scaling": "StandardScaler",
+    "evaluation_metrics": "accuracy",
+    "imputation": "mean imputation",
+    "encoding": "LabelEncoder"
+}}
+Return your findings as a dictionary within triple backticks for Python, formatted as follows:
+{{
+    "dataset_name": "<dataset name>",
+    "dataset_library": "<dataset library>",
+    "model_type": "<model name>",
+    "model_source": "<library if it is an import>",
+    "objective": "<classification or regression or else>",
+    "test_size": "<proportion used for testing>",
+    "cross_validation": "<if any>",
+    "feature_selection": "<if any>",
+    "hyperparameters": {{
+        "key1": "value1",
+        "key2": "value2"
+    }},
+    "dataset_scaling": "<scaling techniques>",
+    "evaluation_metrics": "<evaluation metrics>",
+    "imputation": "<imputation methods>",
+    "encoding": "<Any encoder used>"
+}}
+"""
