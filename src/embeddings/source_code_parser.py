@@ -1,6 +1,5 @@
 from src.mistral.mistral import MistralClient
-
-
+from src.data.mistral_prompts.script_extraction_prompt import extract_information_from_script_prompts
 
 class Source_Code_Parser:
 
@@ -8,6 +7,8 @@ class Source_Code_Parser:
         """
         Initializes the Source_Code_Parser class that can extract model, dataset respectively
         """
+
+        self.mistral = MistralClient()
 
     def extract_information_from_code_string(self, code_str):
         """
@@ -20,174 +21,16 @@ class Source_Code_Parser:
         dict: A dictionary containing extracted information about the dataset, model, 
               hyperparameters, and evaluation metrics.
         """
-        # try:
-        prompt = extract_information_from_source_code_prompt.format(
+        prompt = extract_information_from_script_prompts.format(
             source_code=code_str
         )
-        # Call the LLM through MistralClient and get the response
         source_code_information_response = self.mistral.call_codestral(prompt=prompt)
 
-        # Extract code block from response
         source_code_information = self.mistral.extract_code_block(source_code_information_response)
-        print("response fro mistral: ", source_code_information)
-        # Ensure source_code_information is parsed correctly (assuming it's JSON-like)
-        if isinstance(source_code_information, str):
-            source_code_information = json.loads(source_code_information)
-        # Safeguard key access and update internal state only if keys are present
-        self.dataset_statistics.update({
-            "dataset_name": source_code_information.get("dataset_name", "Unknown"),
-            "dataset_library": source_code_information.get("dataset_library", "Unknown"),
-            "feature_scaling": source_code_information.get("dataset_scaling", False),
-            "test_size": source_code_information.get("test_size", None),
-            "number_of_classes": source_code_information.get("number_of_classes", None),
-            "cross_validation": source_code_information.get("cross_validation", None),
-            "feature_selection": source_code_information.get("feature_selection", None),
-            "imputation": source_code_information.get("imputation", None),
-            "encoding": source_code_information.get("encoding", None),
-        })
 
-        self.model_statistics.update({
-            "model_type": source_code_information.get("model_type", "Unknown"),
-            "model_source": source_code_information.get("model_source", "Unknown"),
-            "objective": source_code_information.get("objective", "Unknown"),
-            "model_hyperparameters": source_code_information.get("hyperparameters", {}),
-        })
-
-        self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
+        self.extract_model_and_dataset(source_code_information)
 
         return True
 
-        # except (AttributeError, KeyError, ValueError) as e:
-        #     print(f"Error: {e}")
-        #     return {"error": str(e)}
-
-        # except Exception as e:
-        #     print(f"An unexpected error occurred: {e}")
-        #     return {"error": "An unexpected error occurred during processing."}
-
-    def extract_dataset_from_code_string(self, code_str):
-        try:
-            prompt = extract_dataset_from_source_code_prompt.format(source_code=code_str)
-            response = self.mistral.call_codestral(prompt=prompt)
-            dataset_extraction_code = self.mistral.extract_code_block(response)
-            try:
-                namespace = {}
-                exec(dataset_extraction_code, namespace)
-                self.datasets = namespace["extract_datasets"]()
-
-                X_train = pd.DataFrame(self.datasets[0])
-                X_test = pd.DataFrame(self.datasets[2])
-                
-                y_train = self._convert_to_series(self.datasets[1])
-                y_test = self._convert_to_series(self.datasets[3])
-                
-                self.datasets = (X_train, y_train, X_test, y_test)
-                return True
-            except Exception as e:
-                print("Error executing code from mistral:", e)
-                return False
-
-        except AttributeError as e:
-            print(f"Error: Attribute issue - {e}")
-            return {"error": "Attribute issue during mistral interaction"}
-
-        except TypeError as e:
-            print(f"Error: Type issue - {e}")
-            return {"error": "Type issue in input or method call."}
-            
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return {"error": "An unexpected error occurred during processing"}
-
-    def extract_information_and_dataset_from_code_str(self, code_str):
-        """
-        Extracts both information and dataset from the code string.
-        """
-        prompt = extract_information_and_datasets_prompt.format(source_code=code_str)
-        response = self.mistral.call_codestral(prompt=prompt)
-        source_code_information = self.mistral.extract_code_block(response)
-        if isinstance(source_code_information, str):
-
-            source_code_information = json.loads(source_code_information)
-
-        self.dataset_statistics.update({
-            "dataset_name": source_code_information.get("dataset_name", "Unknown"),
-            "dataset_library": source_code_information.get("dataset_library", "Unknown"),
-            "feature_scaling": source_code_information.get("dataset_scaling", False),
-            "test_size": source_code_information.get("test_size", None),
-            "number_of_classes": source_code_information.get("number_of_classes", None),
-            "cross_validation": source_code_information.get("cross_validation", None),
-            "feature_selection": source_code_information.get("feature_selection", None),
-            "imputation": source_code_information.get("imputation", None),
-            "encoding": source_code_information.get("encoding", None),
-        })
-
-        self.model_statistics.update({
-            "model_type": source_code_information.get("model_type", "Unknown"),
-            "model_source": source_code_information.get("model_source", "Unknown"),
-            "objective": source_code_information.get("objective", "Unknown"),
-            "model_hyperparameters": source_code_information.get("hyperparameters", {}),
-        })
-
-        self.evaluation_metrics = source_code_information.get("evaluation_metrics", None)
-        dataset_extraction_code = source_code_information.get("extract_datasets_function", None)
-
-
-        try:
-            namespace = {}
-            exec(dataset_extraction_code, namespace)
-            self.datasets = namespace["extract_datasets"]()
-
-            X_train = pd.DataFrame(self.datasets[0])
-            X_test = pd.DataFrame(self.datasets[2])
-
-            y_train = self._convert_to_series(self.datasets[1])
-            y_test = self._convert_to_series(self.datasets[3])
-            self.datasets = (X_train, y_train, X_test, y_test)
-            return True
-        except Exception as e:
-            print("Error executing code from mistral:", e)
-            return False
-
-
-    def _convert_to_series(self, data):
-        """
-        Converts the input data to a 1-dimensional pandas Series.
-        Handles cases where the input is a DataFrame with shape (n, 1) or a numpy array.
-        """
-        if isinstance(data, pd.DataFrame) and data.shape[1] == 1:
-            return pd.Series(data.squeeze())
-        elif isinstance(data, np.ndarray) and data.ndim == 2 and data.shape[1] == 1:
-            return pd.Series(data.squeeze())
-        else:
-            return pd.Series(data)
-
-    def perform_statistical_analysis(self):
-        if self.datasets:
-            X_train, y_train, X_test, y_test = self.datasets
-
-            self.dataset_statistics["linearity_score"] = self._calculate_aggregate_linearity_score(X_train, y_train)
-
-            self.dataset_statistics["number_of_features"] = X_train.shape[1]
-            self.dataset_statistics["number_of_samples"] = X_train.shape[0]
-            self.dataset_statistics["number_of_classes"] = y_train.nunique() 
-
-            self.dataset_statistics["feature_to_sample_ratio"] = (
-                self.dataset_statistics["number_of_features"] / self.dataset_statistics["number_of_samples"]
-            )
-        else:
-            raise ValueError("Dataset not loaded for the code string analyser")
-
-    def _calculate_aggregate_linearity_score(self, X, y, threshold=0.5):
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("X should be a pandas DataFrame.")
-        if not isinstance(y, (pd.Series, np.ndarray)):
-            raise TypeError("y should be a pandas Series or a 1-dimensional numpy array.")
-
-        correlation_matrix = X.corrwith(y, method='pearson')
-        linear_features_count = (correlation_matrix.abs() > threshold).sum()
-
-        total_features = len(correlation_matrix)
-        linearity_score = linear_features_count / total_features
-
-        return linearity_score
+    def extract_model_and_dataset(self, source_code_information):
+        print("response fro mistral: ", source_code_information)
