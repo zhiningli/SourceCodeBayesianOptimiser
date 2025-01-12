@@ -41,6 +41,5 @@ def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
             correct += (predicted == labels).sum().item()
 
     accuracy = 100 * correct / total
-    print(f"Test Accuracy: {accuracy:.2f}%")
     return accuracy
 """

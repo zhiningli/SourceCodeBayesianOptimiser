@@ -73,6 +73,14 @@ class ScriptRepository:
         except ConnectionFailure as e:
             print("Connection failure:", e)
             return []
+        
+    def fetch_script_by_name(self, name):
+        try:
+            script = self.collection.find_one({"script_name": name})
+            return script
+        except ConnectionFailure as e:
+            print("Connection failure: ", e)
+            return None
 
     def _convert_to_bson_compatible(self, value):
         """

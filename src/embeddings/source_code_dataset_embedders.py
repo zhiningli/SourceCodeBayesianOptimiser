@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+from tqdm import tqdm
 
 class Dataset_Scoring_Helper:
 
@@ -30,7 +31,7 @@ class Dataset_Scoring_Helper:
     def execute_objective_func_against_inital_points(self):
         
         results = {}
-        for i, initial_point in enumerate(self.initial_points):
+        for i, initial_point in enumerate(tqdm(self.initial_points, desc="Processing initial points")):
             params = {
                 "learning_rate": self.search_space["learning_rate"][initial_point[0]],
                 "momentum": self.search_space["momentum"][initial_point[1]],
