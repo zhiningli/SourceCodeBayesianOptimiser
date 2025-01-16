@@ -5,7 +5,7 @@ Your task is to analyze and extract relevant sections from the provided source c
 </code> 
 Please help me extract the following information:
 
-1. "The section that contains the model architecture"
+1. "The section that contains the model architecture, retain comments if any"
 2. "The section that contains the dataset information"
 
 Here is an example of how this should be done. Pay attention to the <> used as it will be used for parsing later "

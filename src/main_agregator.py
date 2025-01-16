@@ -21,22 +21,21 @@ class Constrained_Search_Space_Constructor:
         self.dataset_code_str = None
         self.overall_code_str = None
 
-    def suggest_search_space(self, code_str, model_num):
+    def suggest_search_space(self, code_str, target_model_num, target_dataset_num):
 
         self.overall_code_str = code_str
-        print("Step1: extract relevant information from code_str...")
+        print("Step 1: extract relevant information from code_str...")
         information = self.parser.extract_information_from_code_string(code_str=code_str)
-        print("Step1 completed")
-        print("Step2: parse model and dataset code string...")
+        print("Step 1 completed")
+        print("Step 2: parse model and dataset code string...")
         self.model_code_str = information["model"]
-        print("Model_String: ", self.model_code_str)
         self.dataset_code_str = information["dataset"]
-        print("Step2 Completed")
-        print("Step3: computing model similarities")
+        print("Step 2 Completed")
+        print("Step 3: computing model similarities...")
         model_similarities = self.compute_top_k_model_similarities()
-        print("Step3 completed")
-        print("Step4: compute dataset similarities")
-        dataset_similarities = self.compute_top_k_dataset_similarities(model_num=model_num)
+        print("Step 3 completed")
+        print("Step 4: compute dataset similarities...")
+        dataset_similarities = self.compute_top_k_dataset_similarities(model_num=target_model_num)
 
         print("top_3_model_similarities: ", model_similarities)
         print("top_3_dataset_similarities: ", dataset_similarities) 
@@ -47,15 +46,18 @@ class Constrained_Search_Space_Constructor:
 
         for _, model_name in model_similarities:
             for _, dataset_name in dataset_similarities:
-                model_num = model_name[5:]
-                dataset_num = dataset_name[7:]
+                model_num = int(model_name[5:])
+                dataset_num = int(dataset_name[7:])
+                if model_num == target_model_num and dataset_num == target_dataset_num:
+                    continue
                 relevant_script_object = self._get_relevant_script_by_model_num_and_dataset_num(model_num=model_num, dataset_num=dataset_num)
                 best_candidate = relevant_script_object["best_candidate"]
                 hyperparameter_space.append(best_candidate)
         print("hyperparameter_space: ", hyperparameter_space)
-        search_space = self._construct_compact_hyperparameter_search_space(hyperparameter_space[1:])
+        search_space = self._construct_compact_hyperparameter_search_space(hyperparameter_space)
 
         print("constrained_search_space_constructed: ", search_space)
+        return search_space
 
     def compute_top_k_model_similarities(self, k = 3):
 
@@ -126,8 +128,12 @@ class Constrained_Search_Space_Constructor:
         print("normalised_ranked_dataset_similarities: ", normalized_items)
         # Push normalized values back into the heap
         for norm_ktrc, name in normalized_items:
-            heapq.heappush(dataset_similarities, (-norm_ktrc, "dataset" + name[6:]))
-
+            num = int(name[6:])
+            if num == 10:
+                heapq.heappush(dataset_similarities, (-norm_ktrc, "dataset10"))
+            else:
+                num %= 10
+                heapq.heappush(dataset_similarities, (-norm_ktrc, "dataset"+str(num)))
         # Extract the top-k largest values from the normalized heap
         res = []
         for _ in range(min(k, len(dataset_similarities))):
@@ -158,7 +164,6 @@ class Constrained_Search_Space_Constructor:
             return ["script" + str(model_num-1) + str(i) for i in range(1, 10)] + ["script100"]
 
     def _get_relevant_script_by_model_num_and_dataset_num(self, model_num, dataset_num):
-
         if model_num == 1:
             script_name = "script"+str(dataset_num)
         elif model_num in set([2, 3, 4, 5, 6, 7, 8, 9]):
@@ -166,13 +171,16 @@ class Constrained_Search_Space_Constructor:
                 script_name = "script"+str(model_num)+"0"
             else:
                 script_name = "script"+str(model_num-1)+str(dataset_num)
-        else:
+        elif model_num == 10:
             if dataset_num == 10:
                 script_name = "script100"
             else:
                 script_name = "script9"+str(dataset_num)
-        print("fetching ", script_name, " that contains model ", model_num, " dataset_num ", dataset_num)
+        else:
+            raise ValueError("Model number is wrong: ", model_num)
+        print("fetching", script_name, "that contains model", model_num, "dataset_num", dataset_num)
         return self.script_repository.fetch_script_by_name(script_name)     
+    
     def _construct_compact_hyperparameter_search_space(self, hyperparameter_space):
         l = [float('inf'), float('inf'), float('inf'), float('inf')]
         h = [0, 0, 0, 0]                

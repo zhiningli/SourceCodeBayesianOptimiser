@@ -35,8 +35,8 @@ class MLP_BO_Optimiser:
                     search_space: Tensor,
                     objective_function_name: str,
                     sample_per_batch=1,
-                    n_iter=25, 
-                    initial_points=5,):
+                    n_iter=20, 
+                    initial_points=25,):
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
         :param code_str: A string defining the objective function.
