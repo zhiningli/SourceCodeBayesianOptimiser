@@ -118,7 +118,7 @@ new_search_space = {
 }
 
 
-repo = ScriptRepository()
+repo = ScriptRepository(collection_name="experiment2")
 optimiser = MLP_BO_Optimiser()
 
 accuracies, best_y, best_candidate = optimiser.optimise(
@@ -127,7 +127,45 @@ accuracies, best_y, best_candidate = optimiser.optimise(
     objective_function_name="train_simple_nn"
 )
 
+constrained_accuracies, constrained_best_y, constrained_best_candidate = optimiser.optimise(
+    code_str = new_script,
+    search_space = new_search_space,
+    objective_function_name="train_simple_nn"
+)
 
+best_candidate = list(map(int, best_candidate.flatten().tolist()))
+new_best_candidate = list(map(int, constrained_best_candidate.flatten().tolist()))
+
+script_object_to_store = {
+    "script": new_script,
+    "best_candidate": best_candidate,
+    "best_hyperparameters": {
+        "learning_rate": search_space["learning_rate"][int(best_candidate[0])],
+        "momentum": search_space["momentum"][int(best_candidate[1])],
+        "weight_decay": search_space["weight_decay"][int(best_candidate[2])],
+        "num_epochs": search_space["num_epochs"][int(best_candidate[3])],
+    },
+    "best_score": float(best_y),
+    "accuracies": list(map(float, accuracies)),
+    "scriptName": "unfamiliar script 1",
+    "constrained_search_space": {
+        "search_space": {
+            "lower": lower,
+            "upper": upper,
+        },
+        "best_score": float(constrained_best_y),
+        "accuracies": list(map(float, constrained_accuracies)),
+        "new_best_candidate": new_best_candidate,
+        "best_hyperparameters": {
+        "learning_rate": new_search_space["learning_rate"][int(new_best_candidate[0])],
+        "momentum": new_search_space["momentum"][int(new_best_candidate[1])],
+        "weight_decay": new_search_space["weight_decay"][int(new_best_candidate[2])],
+        "num_epochs": new_search_space["num_epochs"][int(new_best_candidate[3])],
+        },
+    }    
+}
+
+repo.save_scripts(script_object_to_store)
 
 
 
