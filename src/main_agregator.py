@@ -33,6 +33,10 @@ class Constrained_Search_Space_Constructor:
         print("Step 2 Completed")
         print("Step 3: computing model similarities...")
         model_similarities = self.compute_top_k_model_similarities()
+
+        if not target_model_num:
+            target_model_num = int(model_similarities[0][1][-1])
+            print(f"The most similar model is model{target_model_num}")
         print("Step 3 completed")
         print("Step 4: compute dataset similarities...")
         dataset_similarities = self.compute_top_k_dataset_similarities(model_num=target_model_num)
