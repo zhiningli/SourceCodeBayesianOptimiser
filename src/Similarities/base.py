@@ -1,26 +1,37 @@
-import numpy as np
 import torch
-
-from typing import Union
+import torch.nn.functional as F
 
 class SimilarityBase:
 
-    def __init__(self):
-        self.inputType = None
-
-    def compute(self, embedding1: Union[np.ndarray, torch.Tensor], embedding2: Union[np.ndarray, torch.Tensor]):
+    def compute(self, embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
         """
         Abstract method to compute similarity between two embeddings
         """
+        if not (isinstance(embedding1, torch.Tensor) and (isinstance(embedding2, torch.Tensor))):
+            raise TypeError(f"Expected both embeddings to be Pytorch tensor, got first embedding: {type(embedding1)}, second embedding: {type(embedding2)}")
 
-    def _prepare_embeddings(self, embedding):
+        if embedding1.shape != embedding2.shape:
+            raise ValueError(f"Incompatible shape for two embeddings, embedding1 has shape of {embedding1.shape}, embedding2 has shape of{embedding2.shape} ")
+
+        raise NotImplementedError("This method must be inherited and implemented by children classes")
+
+
+class ConsineSimilarity(SimilarityBase):
+
+    def compute(self, embedding1: torch.Torch , embedding2: torch.Torch) -> torch.Torch:
+        r"""
+        Compute a cosine similarity between two PyTorch Tensors (or NumPy arrays).
+        
+        Params:
+        embedding1: torch.Tensor or np.ndarray
+            First embedding vector.
+        embedding2: torch.Tensor or np.ndarray
+            Second embedding vector.
+        
+        Output:
+            torch.Tensor showing the cosine similarity.
         """
-        Typing and shape checking for embeddings
-        """
-        if isinstance(embedding, torch.Tensor):
-            pass
+        return F.cosine_similarity(embedding1, embedding2, dim=0)
+
+
     
-    def _transform_to_numpy_array(self, embedding_tensor: torch.Tensor) -> np.ndarray:
-        """
-        Transform a Pytorch tensor into a Numpy array, handling edge cases
-        """
