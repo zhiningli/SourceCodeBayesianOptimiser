@@ -11,36 +11,43 @@ import numpy as np
 script_repo = ScriptRepository()
 
 unseen_model1 = """
+# I am just adding some random comments to disrupt the vector embeddings and this by right should give some problems to the implementations.
+import torch.nn.functional as F
+
+class BottleneckResidualBlock(nn.Module):
+    def __init__(self, in_features, bottleneck_features=16):
+        super(BottleneckResidualBlock, self).__init__()
+        # First linear layer
+        self.fc1 = nn.Linear(in_features, bottleneck_features)
+        # Second with bottleneck features 
+        self.fc2 = nn.Linear(bottleneck_features, bottleneck_features) 
+        self.fc3 = nn.Linear(bottleneck_features, in_features) 
+        self.relu = nn.ReLU()
+
+        # The actuall passing functions
+    def forward(self, x):
+        residual = x
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
+        x += residual  # Skip connection
+        return F.relu(x)  # Apply activation to the output
+
 class Model(nn.Module):
     def __init__(self, input_size, num_classes):
         super(Model, self).__init__()
-        self.fc1 = nn.Linear(input_size, 256)       # First hidden layer
-        self.bn1 = nn.BatchNorm1d(256)             # Batch normalization
-        self.fc2 = nn.Linear(256, 128)             # Second hidden layer
-        self.bn2 = nn.BatchNorm1d(128)
-        self.fc3 = nn.Linear(256, 64)              # Third hidden layer
-        self.bn3 = nn.BatchNorm1d(64)
-        self.fc4 = nn.Linear(64, num_classes)      # Output layer
+        self.fc1 = nn.Linear(input_size, 256)
+        self.res1 = BottleneckResidualBlock(256, 64)
+        self.res2 = BottleneckResidualBlock(256, 64)
+        self.fc2 = nn.Linear(256, num_classes)
 
-        self.relu = nn.ReLU()
-        self.leaky_relu = nn.LeakyReLU(negative_slope=0.01)
-        self.tanh = nn.Tanh()
-        
-        self.dropout = nn.Dropout(p=0.3)           # Regularization
-        
     def forward(self, x):
-        x = self.fc1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        
-        x = self.fc3(x)
-        x = self.bn3(x)
-        x = self.tanh(x)
-        x = self.dropout(x)
-        
-        x = self.fc4(x)
+        x = F.relu(self.fc1(x))
+        x = self.res1(x)
+        x = self.res2(x)
+        x = self.fc2(x)
         return x
+
 """
 
 

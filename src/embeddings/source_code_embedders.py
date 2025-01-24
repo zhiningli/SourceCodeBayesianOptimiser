@@ -1,7 +1,6 @@
 from transformers import RobertaTokenizer, RobertaModel
 import torch
 
-
 class Codebert_Embedder:
 
     def __init__(self):
