@@ -50,7 +50,7 @@ class ConsineSimilarity(SimilarityBase):
         
         Returns:
             torch.Tensor 
-            A scalar tensor representing the cosine similarity.
+            A scalar tensor representing the cosine similarity between 0 and 1.
         """
         return F.cosine_similarity(embedding1, embedding2, dim=0)
 
@@ -74,7 +74,7 @@ class EuclideanSimilarity(SimilarityBase):
         return self.to_similarity(torch.dist(embedding1, embedding2, p = 2))
 
 
-class ManhanttanDistance(SimilarityBase):
+class ManhanttanSimilarity(SimilarityBase):
     def compute(self, embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
         r"""
         Compute the Manhanttan distance between two embeddings in the form of Pytorch Tensors

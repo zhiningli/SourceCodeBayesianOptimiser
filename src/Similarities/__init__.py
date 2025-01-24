@@ -1,3 +1,3 @@
 from .base import ConsineSimilarity
-from .base import EuclideanDistance
-from .base import ManhanttanDistance
+from .base import EuclideanSimilarity
+from .base import ManhanttanSimilarity
