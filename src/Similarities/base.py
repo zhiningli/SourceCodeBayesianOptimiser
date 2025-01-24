@@ -15,6 +15,26 @@ class SimilarityBase:
 
         raise NotImplementedError("This method must be inherited and implemented by children classes")
 
+    def to_similarity(self, distance: torch.Tensor):
+        r"""
+        Convert distance into a similarity metric between 0 and 1 via reciproval transformation
+        
+        Params:
+        distance: torch.Tensor
+        
+        Returns:
+        similarity: torch.Tensor
+        A scalar tensor as similarity score
+        """
+        if not isinstance(distance, torch.Tensor):
+            raise TypeError(f"Expected a torch.Tensor, but got {type(distance)}")
+        
+        if distance.dim() != 0:
+            raise ValueError(f"Expected a scalar tensor (dim=0), but got a tensor with shape {distance.shape}")
+        
+        return 1. / (1. + distance)
+
+
 
 class ConsineSimilarity(SimilarityBase):
 
@@ -28,10 +48,46 @@ class ConsineSimilarity(SimilarityBase):
         embedding2: torch.Tensor or np.ndarray
             Second embedding vector.
         
-        Output:
-            torch.Tensor showing the cosine similarity.
+        Returns:
+            torch.Tensor 
+            A scalar tensor representing the cosine similarity.
         """
         return F.cosine_similarity(embedding1, embedding2, dim=0)
 
 
-    
+class EuclideanSimilarity(SimilarityBase):
+    def compute(self, embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
+        r"""
+        Compute the Enclidean similarity between two embeddings in the form of Pytorch Tensors
+
+        Params:
+        embedding1: torch.Tensor
+            First embedding tensor
+        embedding2: torch.Tensor
+            Second embedding tensor
+        
+        Returns:
+            torch.Tensor:
+                A scalar tensor representing the Euclidean distance    
+        """
+
+        return self.to_similarity(torch.dist(embedding1, embedding2, p = 2))
+
+
+class ManhanttanDistance(SimilarityBase):
+    def compute(self, embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
+        r"""
+        Compute the Manhanttan distance between two embeddings in the form of Pytorch Tensors
+
+        Params:
+        embedding1: torch.Tensor
+            First embedding tensor
+        embedding2: torch.Tensor
+            Second embedding tensor
+        
+        Returns:
+            torch.Tensor:
+                A scalar tensor representing the Manhanttan distance    
+        """
+
+        return self.to_similarity(torch.dist(embedding1, embedding2, p = 1))
