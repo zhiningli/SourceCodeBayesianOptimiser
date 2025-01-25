@@ -13,13 +13,14 @@ class ComponentStore:
         This class extract model and dataset specfications respectively from the 
         code string and instantiate each of them for further embedding purposes
         """
+        self._code_string: str = None
+        self._model_string: str = None
+        self._dataset_string: str = None
 
-        self._model_string: str | None = None
-        self.model_instance: Callable | None = None
-        self._dataset_string: str | None = None
-        self.dataset_instance: Callable | None = None
-        self.objective_func: Callable | None = None
-        self._code_string: str | None = None
+        self.model_instance: torch.nn.Module = None
+        self.dataset_instance: torch.utils.data.Dataset = None
+        self.objective_func: Callable = None
+
         self.namespace = {}
 
     @property

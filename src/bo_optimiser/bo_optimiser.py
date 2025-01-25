@@ -1,5 +1,4 @@
 import torch
-from torch import Tensor
 from gpytorch.likelihoods import GaussianLikelihood
 from botorch.models import SingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
@@ -12,16 +11,15 @@ from tqdm import tqdm
 from botorch.optim.optimize import optimize_acqf_discrete
 from itertools import product
 from src.middleware import ComponentStore
+from typing import Callable, Dict, List
 
 class MLP_BO_Optimiser:
 
     def __init__(self):
-        self.params = None
-        self.objective_func = None
-        self.last_error = None
-        self.search_space = None
-        self.bounds = None
-        self._store = None
+        self.objective_func: Callable = None
+        self.search_space: Dict[str, List[float]] = None
+        self.bounds: torch.Tensor = None
+        self._store: ComponentStore = None
 
     @property
     def store(self):
