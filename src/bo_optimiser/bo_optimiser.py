@@ -1,26 +1,17 @@
 import torch
 from torch import Tensor
-from botorch.utils.transforms import standardize
-from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.likelihoods import GaussianLikelihood
 from botorch.models import SingleTaskGP
-from botorch.models.model import Model
-from botorch.models.gp_regression import SingleTaskGP, ExactGP
-from botorch.models.fully_bayesian import MaternKernel
-from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import OutcomeTransform
-from botorch.utils.transforms import standardize
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.utils.sampling import draw_sobol_samples
-from botorch.utils.types import _DefaultType, DEFAULT
-from typing import Any, Optional, Union, Dict, Tuple, List
 from botorch.optim.fit import fit_gpytorch_mll_torch
-from botorch.acquisition import UpperConfidenceBound, AcquisitionFunction, LogExpectedImprovement
-from gpytorch.kernels import ScaleKernel, RBFKernel
-from gpytorch.means.constant_mean import ConstantMean
+from botorch.acquisition import UpperConfidenceBound
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.likelihoods import GaussianLikelihood
 from tqdm import tqdm
 from botorch.optim.optimize import optimize_acqf_discrete
 from itertools import product
+from src.middleware import ComponentStore
 
 class MLP_BO_Optimiser:
 
@@ -30,10 +21,18 @@ class MLP_BO_Optimiser:
         self.last_error = None
         self.search_space = None
         self.bounds = None
+        self._store = None
 
-    def optimise(self, code_str, 
+    @property
+    def store(self):
+        return self._store
+    
+    @store.setter
+    def store(self, value: ComponentStore):
+        self._store = value
+
+    def optimise(self,
                     search_space: Tensor,
-                    objective_function_name: str,
                     sample_per_batch=1,
                     n_iter=20, 
                     initial_points=25,):
@@ -44,15 +43,20 @@ class MLP_BO_Optimiser:
         :param initial_points: Number of initial random samples.
         """
         self.search_space = search_space
+        self.objective_func = self.store.objective_func
         self.bounds = torch.Tensor([
-    [0, 0, 0, 0],
-    [len(self.search_space['learning_rate'])-1, len(self.search_space['momentum'])-1, len(self.search_space['weight_decay'])-1, len(self.search_space['num_epochs'])-1]
-], )
-        namespace = {}
-        exec(code_str, namespace)
-        self.objective_func = namespace.get(objective_function_name)
+                                    [0, 0, 0, 0],
+                                    [len(self.search_space['learning_rate'])-1, 
+                                     len(self.search_space['momentum'])-1, 
+                                     len(self.search_space['weight_decay'])-1, 
+                                     len(self.search_space['num_epochs'])-1]
+                                    ], )
+
+        if not self.objective_func:
+            raise ValueError("Objective function not loaded to the bayesian optimiser, check if Component Store is initiated")
+
         if not callable(self.objective_func):
-            raise ValueError("The code string must define a callable function")
+            raise ValueError("Unable to execute the objective function")
         
         return self._run_bayesian_optimisation(
                                         n_iter=n_iter, 
@@ -77,7 +81,7 @@ class MLP_BO_Optimiser:
         return torch.tensor(self.objective_func(**params), dtype=torch.float64)
 
     def _normalize_to_unit_cube(self, data, bounds):
-        lower_bounds = bounds[0].to(data.device)  # Move to the same device as `data`
+        lower_bounds = bounds[0].to(data.device) 
         upper_bounds = bounds[1].to(data.device)
         return (data - lower_bounds) / (upper_bounds - lower_bounds)
 

@@ -4,6 +4,7 @@ from src.embeddings.source_code_dataset_embedders import Dataset_Scoring_Helper
 import torch.nn.functional as F
 from src.data.db.model_crud import ModelRepository
 from src.data.db.script_crud import ScriptRepository
+from src.middleware import ComponentStore
 import torch
 import heapq
 
@@ -16,26 +17,32 @@ class Constrained_Search_Space_Constructor:
         self.dataset_embedder = Dataset_Scoring_Helper()
         self.model_repository = ModelRepository()
         self.script_repository = ScriptRepository()
+        self._store = ComponentStore()
 
-        self.model_code_str = None
-        self.dataset_code_str = None
-        self.overall_code_str = None
+    @property
+    def store(self):
+        return self._store
+    
+    @store.setter
+    def store(self, value: ComponentStore):
+        self._store = value
 
     def suggest_search_space(self, code_str, target_model_num, target_dataset_num):
 
-        self.overall_code_str = code_str
+        self._store.code_string = code_str
         print("Step 1: extract relevant information from code_str...")
         information = self.parser.extract_information_from_code_string(code_str=code_str)
         print("Step 1 completed")
-        print("Step 2: parse model and dataset code string...")
-        self.model_code_str = information["model"]
-        self.dataset_code_str = information["dataset"]
+        print("Step 2: parse model, dataset and instantiate classes")
+        self._store.model_string = information["model"]
+        self._store.dataset_string = information["dataset"]
+        self._store.instantiate_code_classes()
         print("Step 2 Completed")
         print("Step 3: computing model similarities...")
         model_similarities = self.compute_top_k_model_similarities()
 
         if not target_model_num:
-            target_model_num = int(model_similarities[0][1][-1])
+            target_model_num = 10 if int(model_similarities[0][1][-1]) == 0 else int(model_similarities[0][1][-1])
             print(f"The most similar model is model{target_model_num}")
         print("Step 3 completed")
         print("Step 4: compute dataset similarities...")
@@ -67,8 +74,7 @@ class Constrained_Search_Space_Constructor:
 
         model_objects = self.model_repository.fetch_all_models()
         similarities = []
-        target_embeddings = self.model_embedder.embed_source_code(self.model_code_str).squeeze()
-
+        target_embeddings = self.model_embedder.embed_source_code(self._store.model_string).squeeze()
         similarities = []
         for model_object in model_objects:
             model_name = model_object["model_name"]
@@ -97,7 +103,7 @@ class Constrained_Search_Space_Constructor:
         return res
 
     def compute_top_k_dataset_similarities(self, model_num, k=3):
-        self.dataset_embedder.load_objective_function(self.overall_code_str, "train_simple_nn")
+        self.dataset_embedder.objective_func = self._store.objective_func
 
         # Evaluate the target dataset and extract metrics
         target_dataset_evaluation_results = self.dataset_embedder.execute_objective_func_against_inital_points()

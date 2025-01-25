@@ -1,8 +1,8 @@
 import torch
 import re
-from typing import str 
+from typing import Optional
 
-class ComponentExtractor:
+class ComponentStore:
 
     def __init__(self):
         r"""
@@ -10,10 +10,10 @@ class ComponentExtractor:
         code string and instantiate each of them for further embedding purposes
         """
 
-        self._model_string = None
-        self.model_instance = None
-        self._dataset_string = None
-        self.datset_instance = None
+        self._model_string: str | None = None
+        self.model_instance: str | None = None
+        self._dataset_string = str | None= None
+        self.dataset_instance = None
         self.objective_func = None
         self._code_string = None
         self.namespace = {}
@@ -72,10 +72,10 @@ class ComponentExtractor:
         print(f"Extracted Model: {self.model_instance}")
 
         # Extracting the dataset object
-        self.datset_instance = self.namespace.get("train_dataset")
-        if not self.datset_instance or not isinstance(self.dataset_instance, torch.utils.data.Dataset):
+        self.dataset_instance = self.namespace.get("train_dataset")
+        if not self.dataset_instance or not isinstance(self.dataset_instance, torch.utils.data.Dataset):
             raise ValueError("No valid dataset named 'train_dataset' found")
-        print(f"Extracted dataset: {self.datset_instance}")
+        print(f"Extracted dataset: {self.dataset_instance}")
     
 
     

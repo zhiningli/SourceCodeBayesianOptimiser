@@ -5,7 +5,8 @@ The main purpose of this experiment is to verify that
 from src.main_agregator import Constrained_Search_Space_Constructor
 import importlib
 from src.data.db.script_crud import ScriptRepository
-from src.newIdeas.bo_optimiser import MLP_BO_Optimiser
+from src.bo_optimiser.bo_optimiser import MLP_BO_Optimiser
+from src.middleware import ComponentStore
 import numpy as np
 
 script_repo = ScriptRepository()
@@ -47,7 +48,6 @@ class Model(nn.Module):
         x = self.res2(x)
         x = self.fc2(x)
         return x
-
 """
 
 
@@ -66,7 +66,12 @@ def get_relevant_script_by_model_num_and_dataset_num(model_num, dataset_num):
             script_name = "9" + str(dataset_num)
     return script_name  
                    
+store = ComponentStore()
+
+
 main_constructor = Constrained_Search_Space_Constructor()
+main_constructor.store = store
+
 
 dataset_num = 3
 
@@ -86,7 +91,6 @@ def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
     model = Model(input_size=25, num_classes=3)  # Adjust input size to match your dataset
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
-
     # Training loop
     for epoch in range(num_epochs):
         model.train()
@@ -117,6 +121,8 @@ def train_simple_nn(learning_rate, momentum, weight_decay, num_epochs):
     return accuracy
 """
 
+
+
 lower, upper = main_constructor.suggest_search_space(
     code_str=new_script, target_model_num=None, target_dataset_num=dataset_num
 )
@@ -140,18 +146,13 @@ new_search_space = {
 
 repo = ScriptRepository(collection_name="experiment2")
 optimiser = MLP_BO_Optimiser()
+optimiser.store = store
 
-accuracies, best_y, best_candidate = optimiser.optimise(
-    code_str=new_script,
-    search_space=search_space,
-    objective_function_name="train_simple_nn"
-)
+optimiser.objective_func = new_script
 
-constrained_accuracies, constrained_best_y, constrained_best_candidate = optimiser.optimise(
-    code_str = new_script,
-    search_space = new_search_space,
-    objective_function_name="train_simple_nn"
-)
+accuracies, best_y, best_candidate = optimiser.optimise(search_space=search_space)
+
+constrained_accuracies, constrained_best_y, constrained_best_candidate = optimiser.optimise(search_space = new_search_space)
 
 best_candidate = list(map(int, best_candidate.flatten().tolist()))
 new_best_candidate = list(map(int, constrained_best_candidate.flatten().tolist()))

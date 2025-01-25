@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 from tqdm import tqdm
+from typing import Callable
 
 class Dataset_Scoring_Helper:
 
@@ -21,12 +22,20 @@ class Dataset_Scoring_Helper:
             [19, 92,  5, 14], [21, 28,  1,  1], [47, 90,  3, 13],
             [31, 25,  2,  6], [12, 56,  4, 15]
         ]
-        self.objective_func = None
 
-    def load_objective_function(self, code_str, objective_function_name):
-        namespace = {}
-        exec(code_str, namespace)
-        self.objective_func = namespace.get(objective_function_name)
+
+        self._objective_func = None
+
+    @property
+    def objective_func(self) -> Callable:
+        return self._objective_func
+    
+    @objective_func.setter
+    def objective_func(self, value: Callable):
+        if not callable(value):
+            raise ValueError("The objective function must be callable.")
+        self._objective_func = value
+        print(f"Objective function passed to Dataset scoring helper: {id(self._objective_func)}")
     
     def execute_objective_func_against_inital_points(self):
         
