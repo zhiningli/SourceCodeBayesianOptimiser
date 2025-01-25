@@ -16,6 +16,7 @@ class ComponentExtractor:
         self.datset_instance = None
         self.objective_func = None
         self._code_string = None
+        self.namespace = {}
 
     @property
     def code_string(self):
@@ -24,6 +25,22 @@ class ComponentExtractor:
     @code_string.setter
     def code_string(self, value: str):
         self._code_string = value
+
+    @property
+    def model_string(self):
+        return self._model_string
+
+    @model_string.setter
+    def model_string(self, value: str):
+        self._model_string = value
+    
+    @property
+    def dataset_string(self):
+        return self._dataset_string
+    
+    @dataset_string.setter
+    def dataset_string(self, value: str):
+        self._dataset_string = value
 
     def extract_architecture(self):
         """
@@ -37,4 +54,30 @@ class ComponentExtractor:
             if re.search(pattern, target_string):
                 raise ValueError(f"Forbidden pattern found in code: {pattern}")
 
-    def instantiate_code_classes(self):        
+    def instantiate_code_classes(self):
+
+        self.validate_code_string(target_string=self.code_string)
+        exec(self.code_string, self.namespace)
+
+        # Extracting objective function
+        self.objective_func = self.namespace.get("train_simple_nn")
+        if not callable(self.objective_func):
+            raise ValueError("No valid objective function named 'train_simple_nn' detechted")
+        print("Extracted Objective Fucntion: train_simple_nn")
+
+        # Extracting the model class
+        self.model_instance = self.namespace.get("Model")
+        if not self.model_instance or not issubclass(self.model_instance, torch.nn.Module):
+            raise ValueError("No valid model class named 'Model' found")
+        print(f"Extracted Model: {self.model_instance}")
+
+        # Extracting the dataset object
+        self.datset_instance = self.namespace.get("train_dataset")
+        if not self.datset_instance or not isinstance(self.dataset_instance, torch.utils.data.Dataset):
+            raise ValueError("No valid dataset named 'train_dataset' found")
+        print(f"Extracted dataset: {self.datset_instance}")
+    
+
+    
+
+            
