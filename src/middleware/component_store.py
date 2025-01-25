@@ -1,6 +1,10 @@
 import torch
 import re
-from typing import Optional
+from typing import Callable
+
+# A centralised managed store for code string, model string, dataset string as where as their respective instances.
+# All instances are stored in a seperate namespace so it does not interfere with other part of the module 
+# For further enhancement, consider using a more isolated environment such as pysandbox for running these instances
 
 class ComponentStore:
 
@@ -11,50 +15,47 @@ class ComponentStore:
         """
 
         self._model_string: str | None = None
-        self.model_instance: str | None = None
-        self._dataset_string = str | None= None
-        self.dataset_instance = None
-        self.objective_func = None
-        self._code_string = None
+        self.model_instance: Callable | None = None
+        self._dataset_string: str | None = None
+        self.dataset_instance: Callable | None = None
+        self.objective_func: Callable | None = None
+        self._code_string: str | None = None
         self.namespace = {}
 
     @property
-    def code_string(self):
+    def code_string(self) -> str:
         return self._code_string
 
     @code_string.setter
-    def code_string(self, value: str):
+    def code_string(self, value: str) -> None:
         self._code_string = value
 
     @property
-    def model_string(self):
+    def model_string(self) -> str:
         return self._model_string
 
     @model_string.setter
-    def model_string(self, value: str):
+    def model_string(self, value: str) -> None:
         self._model_string = value
     
     @property
-    def dataset_string(self):
+    def dataset_string(self) -> str:
         return self._dataset_string
     
     @dataset_string.setter
-    def dataset_string(self, value: str):
+    def dataset_string(self, value: str) -> None:
         self._dataset_string = value
-
-    def extract_architecture(self):
-        """
-        Extract the architecture of the instantiated PyTorch model
-        """
     
-    def validate_code_string(self, target_string: str):
-
+    def validate_code_string(self, target_string: str) -> None:
+        r"""
+        Validate the code string and check that it does not contain sensitive keywords that may potentially harm the module.
+        """
         forbidden_patterns = [r"exec", r"os\.", r"sys\.", r"subprocess"]
         for pattern in forbidden_patterns:
             if re.search(pattern, target_string):
                 raise ValueError(f"Forbidden pattern found in code: {pattern}")
 
-    def instantiate_code_classes(self):
+    def instantiate_code_classes(self) -> None:
 
         self.validate_code_string(target_string=self.code_string)
         exec(self.code_string, self.namespace)
