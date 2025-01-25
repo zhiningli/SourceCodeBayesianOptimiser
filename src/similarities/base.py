@@ -35,7 +35,6 @@ class SimilarityBase:
         return 1. / (1. + distance)
 
 
-
 class ConsineSimilarity(SimilarityBase):
 
     def compute(self, embedding1: torch.Torch , embedding2: torch.Torch) -> torch.Torch:
@@ -91,3 +90,4 @@ class ManhanttanSimilarity(SimilarityBase):
         """
 
         return self.to_similarity(torch.dist(embedding1, embedding2, p = 1))
+    
