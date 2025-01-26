@@ -102,11 +102,11 @@ class ModelArchitectureExtractor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         if node.name == "__init__":
             self.in_init = True
-            self.generic_visit(node)
+            self.generic_visit(node)  # Traverse the entire __init__ method
             self.in_init = False
         elif node.name == "forward":
             self.in_forward = True
-            self.generic_visit(node)
+            self.generic_visit(node)  # Traverse the entire forward method
             self.in_forward = False
 
     def visit_Assign(self, node):
@@ -119,20 +119,14 @@ class ModelArchitectureExtractor(ast.NodeVisitor):
                     # Check if the layer is a standard layer or a submodule
                     if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
                         layer_type = node.value.func.attr
+                        layer_attributes = self._extract_layer_attributes(
+                            layer_type, node.value.args, node.value.keywords
+                        )
                         self.architecture["layers"][layer_name] = {
                             "type": layer_type,
-                            "attributes": {},
+                            "attributes": layer_attributes,
                             "children": {}
                         }
-
-                        # Extract attributes for standard layers like Linear
-                        if layer_type == "Linear":
-                            args = node.value.args
-                            if len(args) >= 2:
-                                self.architecture["layers"][layer_name]["attributes"] = {
-                                    "in_features": self._get_argument_value(args[0]),
-                                    "out_features": self._get_argument_value(args[1])
-                                }
 
                     # Handle submodules
                     elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
@@ -145,6 +139,82 @@ class ModelArchitectureExtractor(ast.NodeVisitor):
                                 "attributes": {},
                                 "children": nested_architecture
                             }
+
+        if self.in_forward:
+            if isinstance(node.value, ast.Call): 
+                if isinstance(node.value.func, ast.Attribute):
+                    func_name = self._resolve_func_name(node.value.func)
+                    args = [self._get_argument_value(arg) for arg in node.value.args]
+                    call_repr = f"{func_name}({', '.join(map(str, args))})"
+                    self.architecture["forward_flow"].append(call_repr)
+
+                elif isinstance(node.value.func, ast.Name):
+                    func_call = f"{node.value.func.id}({', '.join(self._get_argument_value(arg) for arg in node.value.args)})"
+                    self.architecture["forward_flow"].append(func_call)
+
+    def _resolve_func_name(self, func_node):
+        """
+        Resolve the name of a function or method call, including attributes.
+
+        Args:
+            func_node (ast.Attribute): The AST node for the function or method.
+
+        Returns:
+            str: The resolved name as a string.
+        """
+        if isinstance(func_node, ast.Attribute):
+            # Resolve chained attributes like self.conv1 or x.size
+            value = self._get_argument_value(func_node.value)
+            return f"{value}.{func_node.attr}"
+        elif isinstance(func_node, ast.Name):
+            # For standalone function names
+            return func_node.id
+        else:
+            return "unknown_func"
+
+
+    def _extract_layer_attributes(self, layer_type: str, args: list, keywords: list) -> dict:
+        attributes = {}
+
+        if layer_type == "Linear":
+            attributes["in_features"] = None
+            attributes["out_features"] = None
+
+            # Handle positional arguments
+            if len(args) >= 2:
+                attributes["in_features"] = self._get_argument_value(args[0])
+                attributes["out_features"] = self._get_argument_value(args[1])
+
+            # Handle keyword arguments
+            for kw in keywords:
+                if kw.arg == "in_features":
+                    attributes["in_features"] = self._get_argument_value(kw.value)
+                elif kw.arg == "out_features":
+                    attributes["out_features"] = self._get_argument_value(kw.value)
+
+        elif layer_type in ["Conv1d", "Conv2d"]:
+            attributes.update({
+                "in_channels": None,
+                "out_channels": None,
+                "kernel_size": None,
+                "stride": 1,  # Default stride
+                "padding": 0  # Default padding
+            })
+
+            # Positional arguments
+            if len(args) >= 2:
+                attributes["in_channels"] = self._get_argument_value(args[0])
+                attributes["out_channels"] = self._get_argument_value(args[1])
+            if len(args) >= 3:
+                attributes["kernel_size"] = self._get_argument_value(args[2])
+
+            # Keyword arguments
+            for kw in keywords:
+                attributes[kw.arg] = self._get_argument_value(kw.value)
+
+        return attributes
+
+
 
     def _extract_nested_module(self, class_node: ast.ClassDef) -> dict:
         """
@@ -163,28 +233,93 @@ class ModelArchitectureExtractor(ast.NodeVisitor):
 
     def _get_argument_value(self, arg):
         """
-        Extract the value of an argument. Handles constants and variable references.
+        Extract the value of an argument. Handles constants, variable references, attributes, 
+        and complex expressions such as binary operations, function calls, and subscripts.
 
         Args:
             arg: AST node representing the argument.
 
         Returns:
-            The value of the argument if constant, or its name if it's a variable reference.
+            str: The resolved value of the argument as a string.
         """
-        if isinstance(arg, ast.Constant):  # Python 3.8+
-            return arg.value
-        elif isinstance(arg, ast.Name):
+        if isinstance(arg, ast.Constant):  # Handle literal values (Python 3.8+)
+            return repr(arg.value)  # Ensure strings are quoted
+        elif isinstance(arg, ast.Name):  # Handle variable references (e.g., `x`)
             return arg.id
-        elif isinstance(arg, ast.Attribute):
-            return f"{arg.value.id}.{arg.attr}"
+        elif isinstance(arg, ast.Attribute):  # Handle attributes (e.g., `self.size`)
+            base = self._get_argument_value(arg.value)
+            return f"{base}.{arg.attr}" if base else f"{arg.attr}"
+        elif isinstance(arg, ast.BinOp):  # Handle binary operations (e.g., 32 * (input_size // 2))
+            left = self._get_argument_value(arg.left)
+            right = self._get_argument_value(arg.right)
+            operator = self._get_operator(arg.op)
+            return f"({left} {operator} {right})"
+        elif isinstance(arg, ast.Call):  # Handle function calls (e.g., `size(0)`)
+            func_name = self._get_argument_value(arg.func)
+            args = [self._get_argument_value(a) for a in arg.args]
+            kwargs = [f"{kw.arg}={self._get_argument_value(kw.value)}" for kw in arg.keywords]
+            all_args = ", ".join(args + kwargs)
+            return f"{func_name}({all_args})"
+        elif isinstance(arg, ast.Subscript):  # Handle subscript (e.g., `x[0]`)
+            value = self._get_argument_value(arg.value)
+            slice = self._get_argument_value(arg.slice)
+            return f"{value}[{slice}]"
+        elif isinstance(arg, ast.UnaryOp):  # Handle unary operations (e.g., `-x`)
+            operand = self._get_argument_value(arg.operand)
+            operator = self._get_operator(arg.op)
+            return f"{operator}{operand}"
+        elif isinstance(arg, ast.Compare):  # Handle comparisons (e.g., `input_size > 0`)
+            left = self._get_argument_value(arg.left)
+            comparators = [self._get_argument_value(comp) for comp in arg.comparators]
+            operators = [self._get_operator(op) for op in arg.ops]
+            return f"{left} {' '.join(op + ' ' + comp for op, comp in zip(operators, comparators))}"
+        elif isinstance(arg, ast.List):  # Handle lists (e.g., `[1, 2, 3]`)
+            elements = [self._get_argument_value(e) for e in arg.elts]
+            return f"[{', '.join(elements)}]"
+        elif isinstance(arg, ast.Tuple):  # Handle tuples (e.g., `(1, 2)`)
+            elements = [self._get_argument_value(e) for e in arg.elts]
+            return f"({', '.join(elements)})"
+        elif isinstance(arg, ast.Dict):  # Handle dictionaries (e.g., `{"a": 1, "b": 2}`)
+            keys = [self._get_argument_value(k) for k in arg.keys]
+            values = [self._get_argument_value(v) for v in arg.values]
+            return f"{{{', '.join(f'{k}: {v}' for k, v in zip(keys, values))}}}"
         else:
-            return None
+            return "unknown"  # Return a placeholder for unsupported or unrecognized types
 
-    def visit_Expr(self, node):
-        if self.in_forward and isinstance(node.value, ast.Call):
-            if isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
-                layer_call = f"{node.value.func.value}.{node.value.func.attr}()"
-                self.architecture["forward_flow"].append(layer_call)
+
+    def _get_operator(self, op):
+        """
+        Map AST operator nodes to their string representations.
+
+        Args:
+            op: AST operator node.
+
+        Returns:
+            str: The string representation of the operator.
+        """
+        operators = {
+            ast.Add: "+",
+            ast.Sub: "-",
+            ast.Mult: "*",
+            ast.Div: "/",
+            ast.Mod: "%",
+            ast.FloorDiv: "//",
+            ast.Pow: "**",
+            ast.Lt: "<",
+            ast.LtE: "<=",
+            ast.Gt: ">",
+            ast.GtE: ">=",
+            ast.Eq: "==",
+            ast.NotEq: "!=",
+            ast.And: "and",
+            ast.Or: "or",
+            ast.BitAnd: "&",
+            ast.BitOr: "|",
+            ast.BitXor: "^",
+            ast.USub: "-",
+            ast.UAdd: "+",
+        }
+        return operators.get(type(op), "?")
 
 
 

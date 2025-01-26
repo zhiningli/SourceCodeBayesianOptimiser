@@ -1,8 +1,10 @@
 import torch
 import torch.nn.functional as F
+from abc import ABC, abstractclassmethod
 
-class SimilarityBase:
+class SimilarityBase(ABC):
 
+    @abstractclassmethod
     def compute(self, embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
         """
         Abstract method to compute similarity between two embeddings
