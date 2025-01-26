@@ -1,6 +1,7 @@
 import torch
 import re
 from typing import Callable
+import inspect
 
 # A centralised managed store for code string, model string, dataset string as where as their respective instances.
 # All instances are stored in a seperate namespace so it does not interfere with other part of the module 
@@ -78,8 +79,39 @@ class ComponentStore:
         if not self.dataset_instance or not isinstance(self.dataset_instance, torch.utils.data.Dataset):
             raise ValueError("No valid dataset named 'train_dataset' found")
         print(f"Extracted dataset: {self.dataset_instance}")
-    
 
+
+        # # Adding some utility functions to the namespace for code analysis
+        # self.namespace["inspect_model_class"] = self._inspect_model_class
+    
+    # def _inspect_model_class(self) -> dict:
+    #     """
+    #     Inspect the model class to analyze its structure.
+
+    #     Returns:
+    #         dict: A structured dictionary representing the class details
+    #     """
+
+    #     if not self.model_instance:
+    #         raise ValueError("Model class is not available for inspection")
+        
+    #     model_class = self.model_instance
+    #     architecture = {}
+
+    #     # Analyze __init__ and forward methods
+    #     try:
+    #         init_source = inspect.getsource(model_class.__init__)
+    #         architecture["init_method"] = init_source
+    #     except OSError:
+    #         architecture["init_method"] = "Could not retrieve __init__ source"
+
+    #     try:
+    #         forward_source = inspect.getsource(model_class.forward)
+    #         architecture["forward_method"] = forward_source
+    #     except OSError:
+    #         architecture["forward_method"] = "Could not retrieve forward source"
+
+    #     return architecture
     
 
             
