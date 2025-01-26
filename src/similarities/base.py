@@ -39,7 +39,7 @@ class SimilarityBase(ABC):
 
 class ConsineSimilarity(SimilarityBase):
 
-    def compute(self, embedding1: torch.Torch , embedding2: torch.Torch) -> torch.Torch:
+    def compute(self, embedding1: torch.Tensor , embedding2: torch.Tensor) -> torch.Tensor:
         r"""
         Compute a cosine similarity between two PyTorch Tensors (or NumPy arrays).
         
@@ -53,6 +53,8 @@ class ConsineSimilarity(SimilarityBase):
             torch.Tensor 
             A scalar tensor representing the cosine similarity between 0 and 1.
         """
+        embedding1 = embedding1.squeeze(0) 
+        embedding2 = embedding2.squeeze(0) 
         return F.cosine_similarity(embedding1, embedding2, dim=0)
 
 

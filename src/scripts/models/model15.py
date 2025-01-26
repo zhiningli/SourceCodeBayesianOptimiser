@@ -30,21 +30,21 @@ class Model(nn.Module):  # Model with dropout regularization
         
         self.fc1 = nn.Linear(input_dim, 256)
         self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, output_classes)
-        
-        self.activation_function = nn.Tanh()
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, output_classes)     
+        self.activation_function = nn.ReLU()
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, data):
         output = self.fc1(data)
         output = self.activation_function(output)
-        output = self.dropout(output)
         
         output = self.fc2(output)
         output = self.activation_function(output)
         output = self.dropout(output)
         
         output = self.fc3(output)
+        output = self.fc4(output)
         return output
 
 """

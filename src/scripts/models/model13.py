@@ -29,16 +29,13 @@ class Model(nn.Module):  # Model with dropout regularization
         self.fc3 = nn.Linear(128, output_classes)
         
         self.activation_function = nn.Tanh()
-        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, data):
         output = self.fc1(data)
         output = self.activation_function(output)
-        output = self.dropout(output)
         
         output = self.fc2(output)
         output = self.activation_function(output)
-        output = self.dropout(output)
         
         output = self.fc3(output)
         return output
