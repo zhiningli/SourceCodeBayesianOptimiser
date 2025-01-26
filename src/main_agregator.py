@@ -1,10 +1,10 @@
-from src.embeddings.source_code_parser import Source_Code_Parser
-from src.embeddings.source_code_embedders import Codebert_Embedder
-from src.embeddings.source_code_dataset_embedders import Dataset_Scoring_Helper
+from src.embeddings.model_embedder import Direct_Model_Code_Embedder
+from src.embeddings.dataset_embedders import Dataset_Scoring_Helper
 import torch.nn.functional as F
 from src.data.db.model_crud import ModelRepository
 from src.data.db.script_crud import ScriptRepository
 from src.middleware import ComponentStore
+from src.middleware import Source_Code_Parser
 import torch
 import heapq
 
@@ -13,7 +13,7 @@ class Constrained_Search_Space_Constructor:
     def __init__(self):
 
         self.parser = Source_Code_Parser()
-        self.model_embedder = Codebert_Embedder()
+        self.model_embedder = Direct_Model_Code_Embedder()
         self.dataset_embedder = Dataset_Scoring_Helper()
         self.model_repository = ModelRepository()
         self.script_repository = ScriptRepository()
