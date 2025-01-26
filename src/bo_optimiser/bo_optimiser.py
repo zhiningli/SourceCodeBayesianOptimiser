@@ -11,7 +11,7 @@ from tqdm import tqdm
 from botorch.optim.optimize import optimize_acqf_discrete
 from itertools import product
 from src.middleware import ComponentStore
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 class MLP_BO_Optimiser:
 
@@ -22,23 +22,34 @@ class MLP_BO_Optimiser:
         self._store: ComponentStore = None
 
     @property
-    def store(self):
+    def store(self) -> ComponentStore:
         return self._store
     
     @store.setter
-    def store(self, value: ComponentStore):
+    def store(self, value: ComponentStore) -> None:
         self._store = value
 
     def optimise(self,
-                    search_space: Tensor,
-                    sample_per_batch=1,
-                    n_iter=20, 
-                    initial_points=25,):
+                    search_space: Dict[str, List[float]],
+                    sample_per_batch: int = 1,
+                    n_iter: int = 20, 
+                    initial_points: int = 25,) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor] :
         r"""
         Optimize the hyperparameters using Bayesian Optimization.
-        :param code_str: A string defining the objective function.
-        :param n_iter: Number of optimization iterations.
-        :param initial_points: Number of initial random samples.
+
+        Params:
+        search_space: A dict object with string being the search space name and value being the search space range
+        sample_per_patch: int specifying sample per batch
+        n_iter: iteration count
+        initial_points: number of initial point to sample
+        
+
+        Returns:
+        
+        Tuple containing:
+        Accuracies: torch.Torch recording the accuracies along the way
+        Best_y: torch scalar Tensor showing the best way
+        Best_candidate: torch.Tensor showing the minimum found
         """
         self.search_space = search_space
         self.objective_func = self.store.objective_func
@@ -61,7 +72,7 @@ class MLP_BO_Optimiser:
                                         initial_points = initial_points,
                                         sample_per_batch= sample_per_batch)
 
-    def _botorch_objective(self, x):
+    def _botorch_objective(self, x: torch.Tensor) -> torch.Tensor:
         """
         A thin wrapper to map input tensor to hyperparameters for MLP
         """
@@ -78,23 +89,23 @@ class MLP_BO_Optimiser:
 
         return torch.tensor(self.objective_func(**params), dtype=torch.float64)
 
-    def _normalize_to_unit_cube(self, data, bounds):
+    def _normalize_to_unit_cube(self, data: torch.Tensor, bounds: torch.Tensor) -> torch.Tensor:
         lower_bounds = bounds[0].to(data.device) 
         upper_bounds = bounds[1].to(data.device)
         return (data - lower_bounds) / (upper_bounds - lower_bounds)
 
 
-    def _denormalize_from_unit_cube(self, data, bounds):
+    def _denormalize_from_unit_cube(self, data: torch.Tensor, bounds: torch.Tensor) -> torch.Tensor:
         lower_bounds = bounds[0].to(data.device)
         upper_bounds = bounds[1].to(data.device)
         return data * (upper_bounds - lower_bounds) + lower_bounds
 
 
     def _run_bayesian_optimisation(self, 
-                                    n_iter,
-                                    initial_points,
-                                    sample_per_batch,
-                                   ):
+                                    n_iter: int,
+                                    initial_points: int,
+                                    sample_per_batch: int,
+                                   ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         r"""
         Run Bayesian Optimisation for hyperparameter tuning
         """
