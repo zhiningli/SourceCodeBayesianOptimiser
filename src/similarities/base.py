@@ -37,7 +37,7 @@ class SimilarityBase(ABC):
         return 1. / (1. + distance)
 
 
-class ConsineSimilarity(SimilarityBase):
+class CosineSimilarity(SimilarityBase):
 
     def compute(self, embedding1: torch.Tensor , embedding2: torch.Tensor) -> torch.Tensor:
         r"""
@@ -73,8 +73,15 @@ class EuclideanSimilarity(SimilarityBase):
             torch.Tensor:
                 A scalar tensor representing the Euclidean distance    
         """
+        # Squeeze the tensors to remove batch dimension (if present)
+        embedding1 = embedding1.squeeze(0)  # Shape becomes (D,)
+        embedding2 = embedding2.squeeze(0)  # Shape becomes (D,)
 
-        return self.to_similarity(torch.dist(embedding1, embedding2, p = 2))
+        # Compute the Euclidean distance
+        distance = torch.dist(embedding1, embedding2, p=2)
+
+        # Convert distance to similarity (optional, based on your use case)
+        return self.to_similarity(distance)
 
 
 class ManhanttanSimilarity(SimilarityBase):

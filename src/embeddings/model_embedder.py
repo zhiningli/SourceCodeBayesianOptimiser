@@ -54,7 +54,6 @@ class Model_Architecture_Code_Embedder(Model_Embedder):
         self.extractor.set_tree(tree)
         self.extractor.visit(tree)
         architecture = self.extractor.architecture
-        print("Extracted architecture: ", architecture)
 
         return self.embed_code_snippet(code_snippet=str(architecture))
         
